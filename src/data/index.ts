@@ -18,7 +18,6 @@ coverage
 .turbo
 `;
 
-
 export const theme = {
   primary: chalk.hex('#00b4d8'),     // Bright cyan-blue
   secondary: chalk.hex('#4cc9f0'),    // Lighter cyan

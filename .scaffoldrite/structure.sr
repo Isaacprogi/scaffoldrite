@@ -7,9 +7,13 @@ folder src {
     file index.ts
   }
   folder library {
-    folder ai {
-      file ait.ts
-      file generateStructureWithGroq.ts
+    folder checkpage {
+      file checkpackage.ts
+    }
+    folder plot {
+      file aiClient.ts
+      file generateStructure.ts
+      file lis.ts
     }
     file ast.ts
     file commandHandler.ts

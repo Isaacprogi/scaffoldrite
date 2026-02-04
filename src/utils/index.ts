@@ -281,7 +281,8 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
   list: ["--structure", "--sr", "--fs", "--diff", "--with-icon"],
   version: [],
-  ai:[]
+  ai:[],
+  "check-packages":["--validate"]
 };
 
 export function printUsage(cmd?: string) {
@@ -297,7 +298,8 @@ export function printUsage(cmd?: string) {
       delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
       rename: "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
       version: "",
-      ai:""
+      ai:"",
+      "check-packages":"[--validate]"
     };
 
     const args = argsMap[cmd] ? ` ${argsMap[cmd]}` : "";

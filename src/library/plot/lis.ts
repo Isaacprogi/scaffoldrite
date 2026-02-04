@@ -120,11 +120,18 @@ export const ai = async () => {
         const clean = sanitizeStructureSR(result);
         fs.writeFileSync(structurePath, clean);
 
-        // Generate the project structure
+        // SAFETY STEP — NON-NEGOTIABLE
+        execSync("sr merge --from-fs .", {
+          cwd: projectPath,
+          stdio: "inherit",
+        });
+
+        // NOW it's safe
         execSync("sr generate .", {
           cwd: projectPath,
           stdio: "inherit",
         });
+
         execSync("sr list --sr --with-icon", {
           cwd: projectPath,
           stdio: "inherit",
