@@ -1,6 +1,6 @@
 {
-  "framework": "",
-  "language": "",
+  "framework": "node js",
+  "language": "typescript",
   "version": "2.0.8",
   "author": "",
   "conventions": {
