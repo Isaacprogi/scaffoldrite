@@ -2,8 +2,15 @@ import { execSync } from "child_process";
 import { theme, icons } from "../../data";
 import path from "path";
 import fs from "fs";
-import { generateStructureStream } from "./generateStructure";
+
+import { runWorkflow,createAdapter,AdapterConfig } from "@scaffoldrite/ai-workflow";
+
 import readline from "readline";
+
+const llmAdapter = createAdapter({
+  apiKey:'',
+
+});
 
 // ─────────────────────────────────────────────
 // HELPER: readline wrapper
@@ -124,12 +131,14 @@ export const ai = async () => {
         const existingStructure = fs.readFileSync(structurePath, "utf-8");
 
         // Stream AI output with progress
-        const result = await generateStructureStream({
-          existingStructure,
-          description,
-          framework,
-          language,
-        });
+        const result = await runWorkflow({
+      existingStructure: existingStructure as string,
+      userRequest: description as string,
+      llmAdapter,
+      onProgress: (step, message) => {
+        console.log(step,message)
+      },
+    });
 
         // 🧠 CLARIFICATION MODE
         if (result.startsWith("CLARIFICATION_REQUIRED")) {
