@@ -1,0 +1,74 @@
+folder public {
+  folder vite {
+    file svg
+folder src {
+  folder assets {
+    folder react {
+      file svg
+  folder components {
+    file Navbar.tsx
+    file Footer.tsx
+    file ProductCard.tsx
+    file BlogCard.tsx
+    file HeroSection.tsx
+    file NewsletterSignup.tsx
+  folder pages {
+    file Home.tsx
+    file Shop.tsx
+    file Blog.tsx
+    file About.tsx
+    file Contact.tsx
+  file App.css
+  file App.tsx
+  file index.css
+  file main.tsx
+file .gitignore
+file index.html
+file package.json
+file README.md
+file tsconfig.app.json
+file tsconfig.json
+file tsconfig.node.json
+file vite.config.ts
+folder src/utils {
+  file api.ts
+folder src/services {
+  file api.service.ts
+folder src/constants {
+  file colors.ts
+folder src/interfaces {
+  file product.interface.ts
+folder src/models {
+  file product.model.ts
+folder src/enums {
+  file product.status.ts
+folder src/filters {
+  file product.filter.ts
+folder src/validators {
+  file product.validator.ts
+folder src/middlewares {
+  file auth.middleware.ts
+folder src/helpers {
+  file auth.helper.ts
+folder src/strategies {
+  file auth.strategy.ts
+folder src/controllers {
+  file product.controller.ts
+folder src/routes {
+  file product.route.ts
+folder src/services/auth {
+  file auth.service.ts
+file src/models/user.model.ts
+file src/interfaces/user.interface.ts
+file src/enums/user.status.ts
+file src/filters/user.filter.ts
+file src/validators/user.validator.ts
+file src/middlewares/user.middleware.ts
+file src/helpers/user.helper.ts
+file src/strategies/user.strategy.ts
+file src/controllers/user.controller.ts
+file src/routes/user.route.ts
+folder src/services/user {
+  file user.service.ts
+file eslint.config.js
+constraints {

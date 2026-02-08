@@ -2,13 +2,14 @@ import { execSync } from "child_process";
 import { theme, icons } from "../../data";
 import path from "path";
 import fs from "fs";
-import { generateStructure } from "./generateStructure";
+import { generateStructureStream } from "./generateStructure";
+import readline from "readline";
 
 // ─────────────────────────────────────────────
 // HELPER: readline wrapper
 // ─────────────────────────────────────────────
 function createAsk() {
-  const rl = require("readline").createInterface({
+  const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
@@ -16,16 +17,24 @@ function createAsk() {
   const ask = (q: string) =>
     new Promise<string>((res) => rl.question(q, res));
 
-  return { ask, close: () => rl.close() };
+  return { ask, close: () => rl.close(), rl };
 }
 
 // ─────────────────────────────────────────────
 // HELPER: sanitize AI output for ScaffoldRite
 // ─────────────────────────────────────────────
-function sanitizeStructureSR(input: string): string {
+function sanitizeStructureSR(input: string) {
   return input
     .split("\n")
-    .filter((line) => !line.match(/^\s*(STRUCTURE|FORMAT|SYNTAX|RULES)/i))
+    .filter((line) => {
+      const t = line.trim();
+      return (
+        t === "" ||
+        t === "{" ||
+        t === "}" ||
+        /^(folder|file|constraints)/.test(t)
+      );
+    })
     .join("\n")
     .trim();
 }
@@ -38,13 +47,13 @@ export const ai = async () => {
     // ─────────────────────────────────────────────
     // 1️⃣ INITIAL QUESTIONS
     // ─────────────────────────────────────────────
-    let { ask, close } = createAsk();
+    let { ask, close, rl } = createAsk();
 
     const projectName = await ask("Project name: ");
-    const framework = await ask("Framework (react, vue, vanilla): ");
+    const framework = await ask("Framework (react, vue): ");
     const language = await ask("Language (js, ts): ");
 
-    close(); // ❗ CLOSE BEFORE execSync
+    close(); // ❗ Close before running execSync
 
     // ─────────────────────────────────────────────
     // 2️⃣ CREATE VITE PROJECT
@@ -52,7 +61,6 @@ export const ai = async () => {
     let template = framework.toLowerCase();
     if (framework === "react" && language === "ts") template = "react-ts";
     if (framework === "vue" && language === "ts") template = "vue-ts";
-    if (framework === "vanilla" && language === "ts") template = "vanilla-ts";
 
     execSync(
       `npx create-vite@latest "${projectName}" --template ${template} --no-rolldown --no-immediate`,
@@ -76,7 +84,7 @@ export const ai = async () => {
     // ─────────────────────────────────────────────
     // 4️⃣ ASK FOR AI ASSISTANCE
     // ─────────────────────────────────────────────
-    ({ ask, close } = createAsk());
+    ({ ask, close, rl } = createAsk());
 
     const wantAI = await ask(
       "\n🤖 Do you want AI assistance in scaffolding the structure of your app? (yes/no): "
@@ -84,9 +92,29 @@ export const ai = async () => {
 
     if (wantAI.toLowerCase() === "yes") {
       while (true) {
-        const description = await ask(
-          "\n📝 Describe your project or what you want to add/change:\n"
+        console.log(
+          "\n📝 Paste your project description below. Press ENTER on an empty line when done:\n"
         );
+
+        const descriptionLines: string[] = [];
+
+        // 🧠 FIX: controlled single listener, auto removed
+        await new Promise<void>((res) => {
+          const onLine = (line: string) => {
+            if (line.trim() === "") {
+              rl.removeListener("line", onLine);
+              res();
+            } else {
+              descriptionLines.push(line);
+            }
+          };
+
+          // extra safety
+          rl.removeAllListeners("line");
+          rl.on("line", onLine);
+        });
+
+        const description = descriptionLines.join(" ");
 
         const structurePath = path.join(
           projectPath,
@@ -95,9 +123,12 @@ export const ai = async () => {
         );
         const existingStructure = fs.readFileSync(structurePath, "utf-8");
 
-        const result = await generateStructure({
+        // Stream AI output with progress
+        const result = await generateStructureStream({
           existingStructure,
           description,
+          framework,
+          language,
         });
 
         // 🧠 CLARIFICATION MODE
@@ -106,9 +137,8 @@ export const ai = async () => {
           console.log(result);
 
           const confirm = await ask("\nIs this what you meant? (yes/no): ");
-
           if (confirm.toLowerCase() === "yes") {
-            await ask("\n✏️ Please rephrase clearly what you want:\n");
+            console.log("\n✏️ Please rephrase clearly what you want:\n");
             continue;
           } else {
             console.log("\n🔁 Okay, please describe what you want again.\n");
@@ -126,7 +156,6 @@ export const ai = async () => {
           stdio: "inherit",
         });
 
-        // NOW it's safe
         execSync("sr generate .", {
           cwd: projectPath,
           stdio: "inherit",
@@ -137,12 +166,12 @@ export const ai = async () => {
           stdio: "inherit",
         });
 
-        // Ask if satisfied
-        ({ ask, close } = createAsk());
+        close();  // 🔥 close the previous interface first
+        ({ ask, close, rl } = createAsk());
+
         const satisfied = await ask(
           "\n✅ Are you satisfied with the structure? (yes/no): "
         );
-
         if (satisfied.toLowerCase() === "yes") break;
       }
     }

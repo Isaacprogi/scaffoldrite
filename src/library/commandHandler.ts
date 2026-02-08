@@ -32,7 +32,7 @@ import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
 import { warnCopyWithoutOutput } from "../utils/index";
 import { execSync } from "child_process";
-import { ai } from "./plot/lis";
+import { ai } from "./plot/ai";
 import { checkAndReportPackages } from "./checkpage/checkpackage";
 
 

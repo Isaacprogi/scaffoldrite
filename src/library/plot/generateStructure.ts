@@ -1,29 +1,48 @@
-import fetch from "node-fetch";
+import { EventSource } from "eventsource";
 
-export async function generateStructure(params: {
+export function generateStructureStream({
+  existingStructure,
+  description,
+  framework,
+  language,
+}: {
   existingStructure: string;
   description: string;
+  framework: string;
+  language: string;
 }): Promise<string> {
-  try {
-    const response = await fetch("http://localhost:3000/generate-structure", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
+  return new Promise<string>((resolve, reject) => {
+    let finalResult = "";
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Backend error: ${text}`);
-    }
+    const url = `http://localhost:3000/generate-structure-stream?existingStructure=${encodeURIComponent(
+      existingStructure
+    )}&description=${encodeURIComponent(
+      description
+    )}&framework=${encodeURIComponent(
+      framework
+    )}&language=${encodeURIComponent(language)}`;
 
-    const data: any = await response.json();
+    const es = new EventSource(url);
 
-    if (typeof data?.result !== "string") {
-      throw new Error("Invalid backend response: result missing");
-    }
+    es.onmessage = (event: any) => {
+      const data = JSON.parse(event.data);
+      if (data.message) {
+        console.log(data.message);
+      }
+      if (data.done) {
+        finalResult = data.result;
+        es.close();
+        resolve(finalResult);
+      }
+      if (data.error) {
+        es.close();
+        reject(new Error(data.error));
+      }
+    };
 
-    return data.result;
-  } catch (err) {
-    throw new Error(`Failed to generate structure: ${(err as Error).message}`);
-  }
+    es.onerror = (err: any) => {
+      es.close();
+      reject(err || new Error("Unknown SSE error"));
+    };
+  });
 }
