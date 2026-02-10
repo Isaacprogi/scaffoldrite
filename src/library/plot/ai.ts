@@ -1,34 +1,40 @@
+#!/usr/bin/env ts-node
 import { execSync } from "child_process";
 import { theme, icons } from "../../data";
 import path from "path";
 import fs from "fs";
 
-import { runWorkflow,createAdapter,AdapterConfig } from "@scaffoldrite/ai-workflow";
-
+import { runWorkflow, createAdapter, AdapterConfig } from "@scaffoldrite/ai-workflow";
 import readline from "readline";
 
-const llmAdapter = createAdapter({
-  apiKey:'',
-
-});
+// ─────────────────────────────────────────────
+// 1️⃣ LLM Adapter Setup
+// ─────────────────────────────────────────────
+const llmAdapter = createAdapter(
+  "openai",
+  {
+    apiKey: process.env.OPENAI_API_KEY || "",
+    model: "gpt-4",
+    maxTokens: 1200,
+    temperature: 0.2,
+  } as AdapterConfig
+);
 
 // ─────────────────────────────────────────────
-// HELPER: readline wrapper
+// 2️⃣ Helper: readline wrapper
 // ─────────────────────────────────────────────
 function createAsk() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
-
   const ask = (q: string) =>
     new Promise<string>((res) => rl.question(q, res));
-
   return { ask, close: () => rl.close(), rl };
 }
 
 // ─────────────────────────────────────────────
-// HELPER: sanitize AI output for ScaffoldRite
+// 3️⃣ Helper: sanitize AI output for ScaffoldRite
 // ─────────────────────────────────────────────
 function sanitizeStructureSR(input: string) {
   return input
@@ -47,52 +53,26 @@ function sanitizeStructureSR(input: string) {
 }
 
 // ─────────────────────────────────────────────
-// MAIN AI FUNCTION
+// 4️⃣ Main AI CLI Function
 // ─────────────────────────────────────────────
 export const ai = async () => {
   try {
-    // ─────────────────────────────────────────────
-    // 1️⃣ INITIAL QUESTIONS
-    // ─────────────────────────────────────────────
+    // Ask for project name
     let { ask, close, rl } = createAsk();
-
     const projectName = await ask("Project name: ");
-    const framework = await ask("Framework (react, vue): ");
-    const language = await ask("Language (js, ts): ");
-
-    close(); // ❗ Close before running execSync
-
-    // ─────────────────────────────────────────────
-    // 2️⃣ CREATE VITE PROJECT
-    // ─────────────────────────────────────────────
-    let template = framework.toLowerCase();
-    if (framework === "react" && language === "ts") template = "react-ts";
-    if (framework === "vue" && language === "ts") template = "vue-ts";
-
-    execSync(
-      `npx create-vite@latest "${projectName}" --template ${template} --no-rolldown --no-immediate`,
-      {
-        stdio: "inherit",
-        shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
-      }
-    );
+    close();
 
     const projectPath = path.resolve(process.cwd(), projectName);
 
-    // ─────────────────────────────────────────────
-    // 3️⃣ INIT SCAFFOLDRITE
-    // ─────────────────────────────────────────────
+    // Initialize project from filesystem
     execSync("sr init --from-fs .", {
       cwd: projectPath,
       stdio: "inherit",
       shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
     });
 
-    // ─────────────────────────────────────────────
-    // 4️⃣ ASK FOR AI ASSISTANCE
-    // ─────────────────────────────────────────────
+    // Ask if AI assistance is wanted
     ({ ask, close, rl } = createAsk());
-
     const wantAI = await ask(
       "\n🤖 Do you want AI assistance in scaffolding the structure of your app? (yes/no): "
     );
@@ -105,7 +85,6 @@ export const ai = async () => {
 
         const descriptionLines: string[] = [];
 
-        // 🧠 FIX: controlled single listener, auto removed
         await new Promise<void>((res) => {
           const onLine = (line: string) => {
             if (line.trim() === "") {
@@ -115,8 +94,6 @@ export const ai = async () => {
               descriptionLines.push(line);
             }
           };
-
-          // extra safety
           rl.removeAllListeners("line");
           rl.on("line", onLine);
         });
@@ -130,71 +107,79 @@ export const ai = async () => {
         );
         const existingStructure = fs.readFileSync(structurePath, "utf-8");
 
-        // Stream AI output with progress
+        // Run AI workflow
         const result = await runWorkflow({
-      existingStructure: existingStructure as string,
-      userRequest: description as string,
-      llmAdapter,
-      onProgress: (step, message) => {
-        console.log(step,message)
-      },
-    });
+          existingStructure,
+          userRequest: description,
+          llmAdapter,
+          onProgress: (step, message) => console.log(`Step ${step}: ${message}`),
+        });
 
-        // 🧠 CLARIFICATION MODE
-        if (result.startsWith("CLARIFICATION_REQUIRED")) {
-          console.log("\n🤖 I need clarification:\n");
-          console.log(result);
+        // Handle clarification if needed
+        if (result.type === "clarify") {
+          console.log("\n🤖 AI requires clarification:\n");
+          console.log(result.message);
+          console.log("Options:", result.options.join(", "));
 
-          const confirm = await ask("\nIs this what you meant? (yes/no): ");
+          const confirm = await ask("\nDo you want to clarify? (yes/no): ");
           if (confirm.toLowerCase() === "yes") {
-            console.log("\n✏️ Please rephrase clearly what you want:\n");
+            console.log("\n✏️ Please rephrase your request clearly:\n");
             continue;
           } else {
-            console.log("\n🔁 Okay, please describe what you want again.\n");
+            console.log("\n🔁 Let's try describing it again.\n");
             continue;
           }
         }
 
-        // ✅ STRUCTURE MODE
-        const clean = sanitizeStructureSR(result);
-        fs.writeFileSync(structurePath, clean);
+        // Handle architecture suggestions
+        if (result.type === "improve") {
+          console.log("\n💡 AI Suggestions for improvement:");
+          result.suggestions.forEach((s, i) => console.log(`${i + 1}. ${s}`));
+          continue; // allow user to adjust description
+        }
 
-        // SAFETY STEP — NON-NEGOTIABLE
-        execSync("sr merge --from-fs .", {
-          cwd: projectPath,
-          stdio: "inherit",
-        });
+        // Handle knowledge answers
+        if (result.type === "answer") {
+          console.log("\n📚 AI Answer:");
+          console.log(result.message);
+          continue; // loop back to project description
+        }
 
-        execSync("sr generate .", {
-          cwd: projectPath,
-          stdio: "inherit",
-        });
+        // Handle filesystem operations
+        if (["create", "delete", "move", "rename"].includes(result.type)) {
+          const clean = sanitizeStructureSR(JSON.stringify(result, null, 2));
+          fs.writeFileSync(structurePath, clean);
 
-        execSync("sr list --sr --with-icon", {
-          cwd: projectPath,
-          stdio: "inherit",
-        });
+          // Safety: merge and generate
+          execSync("sr merge --from-fs .", {
+            cwd: projectPath,
+            stdio: "inherit",
+          });
+          execSync("sr generate .", {
+            cwd: projectPath,
+            stdio: "inherit",
+          });
+          execSync("sr list --sr --with-icon", {
+            cwd: projectPath,
+            stdio: "inherit",
+          });
+        }
 
-        close();  // 🔥 close the previous interface first
-        ({ ask, close, rl } = createAsk());
-
-        const satisfied = await ask(
-          "\n✅ Are you satisfied with the structure? (yes/no): "
-        );
+        const satisfied = await ask("\n✅ Are you satisfied with the structure? (yes/no): ");
         if (satisfied.toLowerCase() === "yes") break;
       }
     }
 
     close();
 
-    // ─────────────────────────────────────────────
-    // 5️⃣ FINISH
-    // ─────────────────────────────────────────────
+    // Finish message
     console.log(theme.success(`\n🎉 Project ${projectName} is ready!\n`));
     console.log(theme.muted(`  cd ${projectName}`));
     console.log(theme.muted("  npm install"));
     console.log(theme.muted("  npm run dev"));
+
   } catch (err) {
     console.error(theme.error(`❌ Failed: ${(err as Error).message}`));
   }
 };
+
