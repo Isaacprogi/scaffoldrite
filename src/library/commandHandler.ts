@@ -39,8 +39,6 @@ const arg3 = args[0];
 const arg4 = args[1];
 
 
-
-
 const passedFlags = getPassedFlags();
 const allowedFlags = ALLOWED_FLAGS[command];
 const dryRun = hasFlag("--dry-run");
@@ -233,7 +231,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         if (!migrated) console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
         return;
     }
-git b
+
     /* =============================== EMPTY INIT =============================== */
     if (empty) {
         const root: FolderNode = { type: "folder", name: ".", children: [] };
