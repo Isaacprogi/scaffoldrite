@@ -36,7 +36,6 @@ export function validateFS(
   for (const child of root.children) {
     if (isIgnored(child.name, effectiveIgnoreList)) continue;
 
-
     const expectedPath = path.join(dir, child.name);
     const expectedSrPath = path.join(currentPath, child.name);
 
@@ -49,7 +48,14 @@ export function validateFS(
         );
       });
 
-      if (allowExtra || allowedExplicitly) continue;
+      if (allowExtra || allowedExplicitly) {
+        // Print info about allowed missing item
+        console.log(
+          `${icons.info} ${theme.info('Allowed missing:')} ${theme.muted(expectedSrPath)} ` +
+          `${theme.muted(allowedExplicitly ? '(explicitly allowed)' : '(via --allow-extra)')}`
+        );
+        continue;
+      }
 
       throw new Error(
         `${icons.error} ${theme.error('Missing in filesystem:')} ${theme.highlight(expectedPath)}\n` +
@@ -88,16 +94,14 @@ export function validateFS(
   for (const item of actualItems) {
     if (isIgnored(item, effectiveIgnoreList)) continue;
 
-
     const existsInSr = root.children.some((c) => c.name === item);
     if (!existsInSr) {
       const extraPath = path.join(dir, item);
+      const extraRel = path.relative(process.cwd(), extraPath);
+      const extraBasename = path.basename(extraPath);
 
       const allowedExplicitly = allowExtraPaths.some((p) => {
         const normalized = path.normalize(p);
-        const extraRel = path.relative(dir, extraPath);
-        const extraBasename = path.basename(extraPath);
-
         return (
           extraBasename === normalized ||
           extraRel === normalized ||
@@ -105,14 +109,21 @@ export function validateFS(
         );
       });
 
-      if (allowExtra || allowedExplicitly) continue;
+      if (allowExtra || allowedExplicitly) {
+        // Print info about allowed extra item
+        console.log(
+          `${icons.info} ${theme.info('Allowed extra:')} ${theme.highlight(extraRel)} ` +
+          `${theme.muted(allowedExplicitly ? '(explicitly allowed)' : '(via --allow-extra)')}`
+        );
+        continue;
+      }
 
       throw new Error(
         `${icons.error} ${theme.error('Extra file/folder found in filesystem:')} ${theme.highlight(extraPath)}\n` +
         `${theme.muted('Not defined in')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(currentPath || "root")}\n` +
         `${theme.info('Options:')}\n` +
         `  • ${theme.primary('--allow-extra')} to allow all extra files\n` +
-        `  • ${theme.primary('--allow-extra ' + path.relative(process.cwd(), extraPath))} to allow this specific file\n` +
+        `  • ${theme.primary('--allow-extra ' + extraRel)} to allow this specific file\n` +
         `  • Delete or move the file to resolve`
       );
     }

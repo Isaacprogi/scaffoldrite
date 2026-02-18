@@ -599,6 +599,10 @@ Scaffoldrite tracks **structural intent only** — it does **not back up file co
 
 ---
 
+  Here's the updated section with improved clarity around `validate`:
+
+---
+
 ## 💾 Preserving Content & Mitigating Risks
 
 Scaffoldrite focuses on **structure, not file content**. By default, `sr generate` creates missing files or folders **without preserving existing file content**. To make this safer:
@@ -624,11 +628,27 @@ git commit -m "Save work before sr generate"
 This ensures you can **restore deleted or modified files** if anything goes wrong.
 
 ### 3️⃣ Validate first
-Preview what Scaffoldrite would change without affecting your files:
+Check your structure without making changes:
+```bash
+sr validate
+```
+This reports missing, extra, or misaligned files and fails on any discrepancy.
+
+To preview what would be allowed during migration or cleanup:
 ```bash
 sr validate --allow-extra
 ```
-This shows missing, extra, or misaligned files.
+This validates structure while **reporting** (not failing on) extra files found in the filesystem. You'll see output like:
+```
+ℹ Allowed extra: README.md (via --allow-extra)
+ℹ Allowed extra: .env.local (via --allow-extra)
+✓ All constraints and filesystem structure are valid
+```
+
+To allow specific extra files only:
+```bash
+sr validate --allow-extra README.md .env.example
+```
 
 ### 4️⃣ Rename carefully
 Instead of renaming in `structure.sr` first:
