@@ -21,6 +21,8 @@ export function validateFS(
     currentPath = "",
   } = options;
 
+  const effectiveIgnoreList = [...ignoreList, ".scaffoldrite"];
+
   if (!fs.existsSync(dir)) {
     throw new Error(
       `${icons.error} ${theme.error('Folder does not exist:')} ${theme.highlight(dir)}\n` +
@@ -32,7 +34,8 @@ export function validateFS(
 
   // Check missing items in filesystem
   for (const child of root.children) {
-    if (isIgnored(child.name, ignoreList)) continue;
+    if (isIgnored(child.name, effectiveIgnoreList)) continue;
+
 
     const expectedPath = path.join(dir, child.name);
     const expectedSrPath = path.join(currentPath, child.name);
@@ -83,7 +86,8 @@ export function validateFS(
 
   // Check extra items in filesystem not in .sr
   for (const item of actualItems) {
-    if (isIgnored(item, ignoreList)) continue;
+    if (isIgnored(item, effectiveIgnoreList)) continue;
+
 
     const existsInSr = root.children.some((c) => c.name === item);
     if (!existsInSr) {

@@ -30,8 +30,6 @@ import { exit } from "../utils/index";
 import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
 import { warnCopyWithoutOutput } from "../utils/index";
-import { checkAndReportPackages } from "./checkpage/checkpackage";
-
 
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
@@ -90,10 +88,10 @@ if (!command || command === "--help" || command === "-h") {
 }
 
 if (!ALLOWED_FLAGS.hasOwnProperty(command)) {
-  console.log(allowedFlags,'wati')
-  console.error(`✗ Unknown command: ${command}`);
-  printUsage();
-  process.exit(1);
+    console.log(allowedFlags, 'wati')
+    console.error(`✗ Unknown command: ${command}`);
+    printUsage();
+    process.exit(1);
 }
 
 
@@ -181,115 +179,112 @@ export const commandHandlers: Record<string, CommandHandler> = {
     // }
 
     // },
-    "check-packages":checkAndReportPackages,
+    init: async () => {
+        const shouldOverwrite = force;
+        const sDir = path.join(baseDir, ".scaffoldrite");
 
- init: async () => {
-    const shouldOverwrite = force;
-    const sDir = path.join(baseDir, ".scaffoldrite");
-
-    // Create folder if missing
-    if (!fs.existsSync(sDir)) {
-        fs.mkdirSync(sDir, { recursive: true });
-    }
-    const projectConfig = path.join(sDir, "project.json");
-
-    const legacyStructure = path.join(baseDir, "structure.sr");
-    const legacyIgnore = path.join(baseDir, ".scaffoldignore");
-
-    const structureExists = fs.existsSync(STRUCTURE_PATH);
-    const ignoreExists = fs.existsSync(IGNORE_PATH);
-    const projectExists = fs.existsSync(projectConfig);
- 
-
-    const existingConfigs = [];
-    if (structureExists) existingConfigs.push("structure.sr");
-    if (ignoreExists) existingConfigs.push(".scaffoldignore");
-    if (projectExists) existingConfigs.push("project.json");
-
-    if (!shouldOverwrite && existingConfigs.length > 0) {
-        console.error(
-            theme.error.bold(`${icons.error} The following files already exist:\n`) +
-            existingConfigs.map(f => theme.muted(`  - ${f}`)).join("\n") +
-            theme.warning(`\n\nUse --force to overwrite everything.`)
-        );
-        exit(1);
-    }
-
-    /* =============================== HANDLE MIGRATION =============================== */
-    if (migrate) {
-        let migrated = false;
-        if (fs.existsSync(legacyStructure)) {
-            fs.renameSync(legacyStructure, STRUCTURE_PATH);
-            console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
-            migrated = true;
+        // Create folder if missing
+        if (!fs.existsSync(sDir)) {
+            fs.mkdirSync(sDir, { recursive: true });
         }
-        if (fs.existsSync(legacyIgnore)) {
-            fs.renameSync(legacyIgnore, IGNORE_PATH);
-            console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
-            migrated = true;
+        const projectConfig = path.join(sDir, "project.json");
+
+        const legacyStructure = path.join(baseDir, "structure.sr");
+        const legacyIgnore = path.join(baseDir, ".scaffoldignore");
+
+        const structureExists = fs.existsSync(STRUCTURE_PATH);
+        const ignoreExists = fs.existsSync(IGNORE_PATH);
+        const projectExists = fs.existsSync(projectConfig);
+
+
+        const existingConfigs = [];
+        if (structureExists) existingConfigs.push("structure.sr");
+        if (ignoreExists) existingConfigs.push(".scaffoldignore");
+        if (projectExists) existingConfigs.push("project.json");
+
+        if (!shouldOverwrite && existingConfigs.length > 0) {
+            console.error(
+                theme.error.bold(`${icons.error} The following files already exist:\n`) +
+                existingConfigs.map(f => theme.muted(`  - ${f}`)).join("\n") +
+                theme.warning(`\n\nUse --force to overwrite everything.`)
+            );
+            exit(1);
         }
-        if (!migrated) console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
+
+        /* =============================== HANDLE MIGRATION =============================== */
+        if (migrate) {
+            let migrated = false;
+            if (fs.existsSync(legacyStructure)) {
+                fs.renameSync(legacyStructure, STRUCTURE_PATH);
+                console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
+                migrated = true;
+            }
+            if (fs.existsSync(legacyIgnore)) {
+                fs.renameSync(legacyIgnore, IGNORE_PATH);
+                console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+                migrated = true;
+            }
+            if (!migrated) console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
+            return;
+        }
+
+        /* =============================== EMPTY INIT =============================== */
+        if (empty) {
+            const root: FolderNode = { type: "folder", name: ".", children: [] };
+            saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
+            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+            }
+            console.log(theme.success(`${icons.success} Empty structure.sr created`));
+        } else if (fromFs) {
+            /* =============================== INIT FROM FILESYSTEM =============================== */
+            const targetDir = path.resolve(arg3 ?? baseDir);
+            const ignoreList = getIgnoreList();
+            const ast = buildASTFromFS(targetDir, ignoreList);
+            saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
+            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+            }
+            console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
+        } else {
+            /* =============================== DEFAULT INIT (TEMPLATE) =============================== */
+            saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
+            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+            }
+            console.log(theme.success(`${icons.success} structure.sr created`));
+        }
+
+        /* =============================== CREATE GLOBAL JSON =============================== */
+        if (shouldOverwrite || !fs.existsSync(projectConfig)) {
+            fs.writeFileSync(
+                projectConfig,
+                JSON.stringify({
+                    framework: "",
+                    language: "",
+                    version: "1.0.0",
+                    author: "",
+                    conventions: {
+                        description: "",
+                        folderStructure: [],
+                        namingRules: [],
+                        folderDepthLimits: [],
+                        userNotes: []
+                    },
+                    additionalInfo: {
+                        stateManagement: "",
+                        styling: "",
+                        testing: "",
+                        routing: "",
+                        apiClient: ""
+                    },
+                }, null, 2)
+            );
+            console.log(theme.info(`${icons.info} Created project config: project.json`));
+        }
+
         return;
-    }
-
-    /* =============================== EMPTY INIT =============================== */
-    if (empty) {
-        const root: FolderNode = { type: "folder", name: ".", children: [] };
-        saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
-        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
-        }
-        console.log(theme.success(`${icons.success} Empty structure.sr created`));
-    } else if (fromFs) {
-        /* =============================== INIT FROM FILESYSTEM =============================== */
-        const targetDir = path.resolve(arg3 ?? baseDir);
-        const ignoreList = getIgnoreList();
-        const ast = buildASTFromFS(targetDir, ignoreList);
-        saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
-        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
-        }
-        console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
-    } else {
-        /* =============================== DEFAULT INIT (TEMPLATE) =============================== */
-        saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
-        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
-        }
-        console.log(theme.success(`${icons.success} structure.sr created`));
-    }
-
-    /* =============================== CREATE GLOBAL JSON =============================== */
-    if (shouldOverwrite || !fs.existsSync(projectConfig)) {
-        fs.writeFileSync(
-            projectConfig,
-            JSON.stringify({
-                framework: "",
-                language: "",
-                version: "1.0.0",
-                author: "",
-                conventions: {
-                    description: "",
-                    folderStructure: [],
-                    namingRules: [], 
-                    folderDepthLimits: [],
-                    userNotes: []
-                },
-                additionalInfo: {
-                    stateManagement: "",
-                    styling: "",
-                    testing: "",
-                    routing: "",
-                    apiClient: ""
-                },
-                createdAt: new Date().toISOString()
-            }, null, 2)
-        );
-        console.log(theme.info(`${icons.info} Created project config: project.json`));
-    }
-
-    return;
-},
+    },
 
 
     update: async () => {
@@ -484,6 +479,68 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
         return;
     },
+
+    find: async () => {
+        const searchQuery = arg3;
+        if (!searchQuery) {
+            console.error(theme.error.bold(`${icons.error} Please provide a file, folder, or path to find.`));
+            printUsage("find");
+            exit(1);
+        }
+
+        const results: string[] = [];
+        const ignoreList = getIgnoreList();
+
+        const searchStructure = isStructure || (!isStructure && !isFS); // default searches both
+        const searchFilesystem = isFS || (!isStructure && !isFS);
+
+        // 1️⃣ Search in structure.sr
+        if (searchStructure && fs.existsSync(STRUCTURE_PATH)) {
+            const structure = loadAST();
+
+            function searchAST(node: FolderNode, currentPath = "") {
+                for (const child of node.children) {
+                    const childPath = path.posix.join(currentPath, child.name);
+                    if (child.name.includes(searchQuery) || childPath.includes(searchQuery)) {
+                        results.push(`${icons.file} [structure] ${childPath}`);
+                    }
+                    if (child.type === "folder") {
+                        searchAST(child, childPath);
+                    }
+                }
+            }
+
+            searchAST(structure.root);
+        }
+
+        // 2️⃣ Search in filesystem
+        if (searchFilesystem) {
+            const fsAst = buildASTFromFS(baseDir, ignoreList);
+
+            function searchFSAST(node: FolderNode, currentPath = "") {
+                for (const child of node.children) {
+                    const childPath = path.posix.join(currentPath, child.name);
+                    if (child.name.includes(searchQuery) || childPath.includes(searchQuery)) {
+                        results.push(`${icons.folder} [fs] ${childPath}`);
+                    }
+                    if (child.type === "folder") {
+                        searchFSAST(child, childPath);
+                    }
+                }
+            }
+
+            searchFSAST(fsAst);
+        }
+
+        if (results.length === 0) {
+            console.log(theme.warning(`${icons.warning} Could not find '${searchQuery}' in the selected scope.`));
+            return;
+        }
+
+        console.log(theme.primary.bold(`\nFound ${results.length} match(es) for '${searchQuery}':`));
+        results.forEach(r => console.log(theme.light(`  ${r}`)));
+    },
+
 
     generate: async () => {
 

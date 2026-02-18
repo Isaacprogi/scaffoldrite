@@ -161,11 +161,11 @@ export function printTree(
   prefix = "",
   isLast = true
 ) {
-  const connector = isLast ? "└── " : "├── ";
-  const nextPrefix = prefix + (isLast ? "    " : "│   ");
-
   node.children.forEach((child, index) => {
     const last = index === node.children.length - 1;
+
+    const connector = last ? "└── " : "├── ";
+    const nextPrefix = prefix + (last ? "    " : "│   ");
 
     if (child.type === "folder") {
       console.log(
@@ -180,16 +180,17 @@ export function printTree(
   });
 }
 
+
 export function printTreeWithIcons(
   node: FolderNode,
   prefix = "",
   isLast = true
 ) {
-  const connector = isLast ? "└── " : "├── ";
-  const nextPrefix = prefix + (isLast ? "    " : "│   ");
-
   node.children.forEach((child, index) => {
     const last = index === node.children.length - 1;
+
+    const connector = last ? "└── " : "├── ";
+    const nextPrefix = prefix + (last ? "    " : "│   ");
 
     if (child.type === "folder") {
       console.log(
@@ -203,6 +204,7 @@ export function printTreeWithIcons(
     }
   });
 }
+
 
 
 export function renameFSItem(oldPath: string, newPath: string) {
@@ -264,7 +266,7 @@ export function getFlagValuesAfter(flag: string) {
 }
 
 export const ALLOWED_FLAGS: Record<string, string[]> = {
-  init: ["--force", "--empty", "--from-fs","--migrate"],
+  init: ["--force", "--empty", "--from-fs", "--migrate"],
   update: ["--from-fs", "--yes", "-y"],
   merge: ["--from-fs", "--yes", "-y"],
   validate: ["--allow-extra"],
@@ -274,14 +276,15 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--verbose",
     "--summary",
     "--ignore-tooling",
-     "--copy"
+    "--copy",
   ],
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
   list: ["--structure", "--sr", "--fs", "--diff", "--with-icon"],
+  find: ["--structure", "--sr", "--fs"], // ✅ updated
   version: [],
-  "check-packages":["--validate"]
+  "check-packages": ["--validate"],
 };
 
 export function printUsage(cmd?: string) {
@@ -296,8 +299,9 @@ export function printUsage(cmd?: string) {
       create: "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
       delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
       rename: "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
+      find: "<query> [--structure | --sr | --fs]",
       version: "",
-      "check-packages":"[--validate]"
+      "check-packages": "[--validate]",
     };
 
     const args = argsMap[cmd] ? ` ${argsMap[cmd]}` : "";
@@ -318,8 +322,9 @@ Usage:
   scaffoldrite update [--from-fs [dir]] [--yes | -y]
   scaffoldrite merge [--from-fs [dir]] [--yes | -y]
   scaffoldrite validate [--allow-extra] [--allow-extra <path1> <path2> ...]
-  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary]  [--ignore-tooling]
+  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling]
   scaffoldrite list [[--structure | --sr] | --fs | --diff] [--with-icon]
+  scaffoldrite find <query> [--structure | --sr | --fs]
   scaffoldrite create <path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite delete <path> [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite rename <path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]
@@ -328,6 +333,7 @@ Usage:
 `));
   }
 }
+
 
 export function structureToSRString(root: FolderNode, rawConstraints: string[]): string {
   sortTree(root);
@@ -389,16 +395,24 @@ export function runRequirements(ctx: RequirementContext) {
     rename() {
       if (!arg3 || !arg4) fail("rename");
     },
+
     generate() {
       if (!arg3) fail("generate");
     },
+
     init() {
       if (fromFs && !arg3) fail("init");
+    },
+
+    // ✅ New requirement for find
+    find() {
+      if (!arg3) fail("find"); // arg3 is the search query
     },
   };
 
   requirements[command]?.();
 }
+
 
 
 
