@@ -10,7 +10,7 @@ import { validateFS } from "./validateFS";
 import { buildASTFromFS } from "./fsToAst";
 import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from '../data/index'
 const pkg = require("../../package.json");
-import { ALLOWED_COMMANDS, getIgnoreList, warnIgnoreToolingUsage } from "../utils/index";
+import { ALLOWED_COMMANDS, getIgnoreList, loadASTFromRef, warnIgnoreToolingUsage } from "../utils/index";
 import { createProgressBar } from "./progress";
 // import { Operation } from "../types/index";
 import {
@@ -34,13 +34,15 @@ import { doctorCommand } from "./commands/doctor";
 import { buildDependencyGraph, printDependencyTree, findStandaloneFiles, detectCircular, printCircular, buildGraphFromStructure } from "./core/deps";
 import { startServer } from "./core/graph-server";
 import {
-  installStructureLock,
-  removeStructureLock,
-  enableCI,
-  disableCI
+    installStructureLock,
+    removeStructureLock,
+    enableCI,
+    disableCI
 } from "./core/lock";
 import { installGitLock, removeGitLock } from "./core/gitHooks";
 import { preventIfStructureLocked } from "./core/lock";
+import { execSync } from "child_process";
+import { buildASTFromGit } from "./fsToAst";
 
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
@@ -98,6 +100,10 @@ const showCircular = hasFlag("--circular");
 const showStandalone = hasFlag("--standalone");
 const showJSON = hasFlag("--json");
 const serve = hasFlag("--serve");
+
+const hasRef = hasFlag("--ref");
+
+const refValue = getFlagValuesAfter("--ref")[0] || 'origin/main';
 
 
 if (!command || command === "--help" || command === "-h") {
@@ -203,11 +209,10 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
     // },
     init: async () => {
-         await preventIfStructureLocked("init");
+        await preventIfStructureLocked("init");
         const shouldOverwrite = force;
         const sDir = path.join(baseDir, ".scaffoldrite");
 
-        // Create folder if missing
         if (!fs.existsSync(sDir)) {
             fs.mkdirSync(sDir, { recursive: true });
         }
@@ -235,7 +240,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
             exit(1);
         }
 
-        /* =============================== HANDLE MIGRATION =============================== */
+
         if (migrate) {
             let migrated = false;
             if (fs.existsSync(legacyStructure)) {
@@ -252,7 +257,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
             return;
         }
 
-        /* =============================== EMPTY INIT =============================== */
+
         if (empty) {
             const root: FolderNode = { type: "folder", name: ".", children: [] };
             saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
@@ -261,7 +266,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
             }
             console.log(theme.success(`${icons.success} Empty structure.sr created`));
         } else if (fromFs) {
-            /* =============================== INIT FROM FILESYSTEM =============================== */
             const targetDir = path.resolve(arg3 ?? baseDir);
             const ignoreList = getIgnoreList();
             const ast = buildASTFromFS(targetDir, ignoreList);
@@ -271,7 +275,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
             }
             console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
         } else {
-            /* =============================== DEFAULT INIT (TEMPLATE) =============================== */
             saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
             if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
                 fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
@@ -279,7 +282,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
             console.log(theme.success(`${icons.success} structure.sr created`));
         }
 
-        /* =============================== CREATE GLOBAL JSON =============================== */
         if (shouldOverwrite || !fs.existsSync(projectConfig)) {
             fs.writeFileSync(
                 projectConfig,
@@ -313,7 +315,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
     update: async () => {
         await preventIfStructureLocked("update");
-        //  FAIL if structure.sr does not exist
         if (!fs.existsSync(STRUCTURE_PATH)) {
             console.error(theme.error.bold(`${icons.error} Error: structure.sr not found. Run \`scaffoldrite init\` first.`));
             exit(1);
@@ -327,7 +328,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
         const constraints = loadConstraints();
 
-        // confirmation
         if (!(await confirmProceed(targetDir))) {
             console.log(theme.muted(`${icons.info} Update cancelled.`));
             return;
@@ -339,9 +339,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return;
     },
     merge: async () => {
-         await preventIfStructureLocked("merge");
+        await preventIfStructureLocked("merge");
 
-        // FAIL if structure.sr does not exist
         if (!fs.existsSync(STRUCTURE_PATH)) {
             console.error(theme.error.bold(`${icons.error} Error: structure.sr not found. Run \`scaffoldrite init\` first.`));
             exit(1);
@@ -353,7 +352,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
         const fsAst = buildASTFromFS(targetDir, ignoreList);
         const structure = loadAST();
 
-        // Merge logic
         const mergeNodes = (existing: FolderNode, incoming: FolderNode) => {
             for (const child of incoming.children) {
                 if (child.type === "folder") {
@@ -375,7 +373,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
         mergeNodes(structure.root, fsAst);
 
 
-        // confirmation
         if (!(await confirmProceed(targetDir))) {
             console.log(theme.muted(`${icons.info} Merge cancelled.`));
             return;
@@ -387,20 +384,28 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return;
     },
     list: async () => {
-       
+
         const isDefault = !isFS && !isDiff && !isStructure;
 
         const targetDir = path.resolve(baseDir);
 
+        let structure;
 
-        /* ================= DEFAULT (NO IGNORE) ================= */
+        if (hasRef) {
+            structure = loadASTFromRef(refValue);
+            console.log(theme.info(`${icons.info} Retrieving list from ${refValue}`));
+        } else {
+            structure = loadAST();
+            console.log(theme.info(`${icons.info} Loading default list structure`));
+        }
+
         if (isDefault) {
             if (!fs.existsSync(STRUCTURE_PATH)) {
                 console.error(theme.error.bold(`${icons.error} structure.sr not found. Run \`scaffoldrite init\` first.`));
                 exit(1);
             }
 
-            const structure = loadAST();
+
 
             console.log(theme.primary.bold(`${icons.file} structure.sr\n`));
             if (withIcons) {
@@ -413,14 +418,12 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
         const ignoreList = getIgnoreList();
 
-        /* ================= STRUCTURE.SR (WITH IGNORE) ================= */
         if (isStructure) {
             if (!fs.existsSync(STRUCTURE_PATH)) {
                 console.error(theme.error.bold(`${icons.error} structure.sr not found. Run \`scaffoldrite init\` first.`));
                 exit(1);
             }
 
-            const structure = loadAST();
             console.log(ignoreList)
             const filtered = filterTreeByIgnore(structure.root, ignoreList);
 
@@ -436,9 +439,10 @@ export const commandHandlers: Record<string, CommandHandler> = {
             return;
         }
 
-        /* ================= FILESYSTEM (WITH IGNORE) ================= */
         if (isFS) {
-            const fsAst = buildASTFromFS(targetDir, ignoreList);
+            const fsAst = hasRef
+                ? buildASTFromGit(refValue, ignoreList)
+                : buildASTFromFS(targetDir, ignoreList);
 
             console.log(theme.secondary.bold(`${icons.folder} filesystem (`) + theme.light(targetDir) + theme.secondary.bold(`)`));
             console.log(theme.muted(`Ignoring: `) + theme.accent(ignoreList.join(", ")) + theme.muted(`\n`));
@@ -451,14 +455,13 @@ export const commandHandlers: Record<string, CommandHandler> = {
             return;
         }
 
-        /* ================= DIFF (MEANINGFUL + IGNORE) ================= */
         if (isDiff) {
             if (!fs.existsSync(STRUCTURE_PATH)) {
                 console.error(theme.error.bold(`${icons.error} structure.sr not found. Run \`scaffoldrite init\` first.`));
                 exit(1);
             }
 
-            const structure = loadAST();
+
             const filteredStructure = filterTreeByIgnore(structure.root, ignoreList);
             const fsAst = buildASTFromFS(targetDir, ignoreList);
 
@@ -486,8 +489,15 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
     validate: async () => {
-      
-        const structure = loadAST();
+        let structure;
+
+        if (hasRef) {
+            // Use custom rules file path with optional ref
+            structure = loadASTFromRef(refValue);
+            console.log(theme.info(`${icons.info} Validating against ${refValue}`));
+        } else {
+            structure = loadAST();
+        }
 
         const outputDir = path.resolve(baseDir);
         const ignoreList = getIgnoreList();
@@ -499,13 +509,18 @@ export const commandHandlers: Record<string, CommandHandler> = {
                 allowExtra,
                 allowExtraPaths,
             });
-            console.log(theme.success.bold(`${icons.success} All constraints and filesystem structure are valid`));
+            console.log(
+                theme.success.bold(`${icons.success} All constraints and filesystem structure are valid`)
+            );
         } catch (err: any) {
-            console.error(theme.error.bold(`${icons.error} Validation failed: `) + theme.light(err.message));
+            console.error(
+                theme.error.bold(`${icons.error} Validation failed: `) +
+                theme.light(err.message)
+            );
             exit(1);
         }
-        return;
     },
+
 
     find: async () => {
         const searchQuery = arg3;
@@ -521,7 +536,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
         const searchStructure = isStructure || (!isStructure && !isFS); // default searches both
         const searchFilesystem = isFS || (!isStructure && !isFS);
 
-        // 1️⃣ Search in structure.sr
         if (searchStructure && fs.existsSync(STRUCTURE_PATH)) {
             const structure = loadAST();
 
@@ -536,11 +550,9 @@ export const commandHandlers: Record<string, CommandHandler> = {
                     }
                 }
             }
-
             searchAST(structure.root);
         }
 
-        // 2️⃣ Search in filesystem
         if (searchFilesystem) {
             const fsAst = buildASTFromFS(baseDir, ignoreList);
 
@@ -555,10 +567,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
                     }
                 }
             }
-
             searchFSAST(fsAst);
         }
-
         if (results.length === 0) {
             console.log(theme.warning(`${icons.warning} Could not find '${searchQuery}' in the selected scope.`));
             return;
@@ -568,20 +578,23 @@ export const commandHandlers: Record<string, CommandHandler> = {
         results.forEach(r => console.log(theme.light(`  ${r}`)));
     },
 
-
     generate: async () => {
-         await preventIfStructureLocked("generate");
+        await preventIfStructureLocked("generate");
 
-        const structure = loadAST();
+        let structure;
+        if (hasRef) {
+            structure = loadASTFromRef(refValue);
+            console.log(theme.info(`${icons.info} Generating from ${refValue}`));
+        } else {
+            structure = loadAST();
+        }
+
         validateConstraints(structure.root, structure.constraints);
 
-
-        const outputDir = path.resolve(arg3 ?? baseDir);
-
-        const warnoutDir = path.resolve(arg3);
+        const outputDir = path.resolve(hasRef ? (args[1] ?? baseDir) : (arg3 ?? baseDir));
+        const warnoutDir = path.resolve(arg3 ?? baseDir);
 
         warnCopyWithoutOutput(hasFlag('--copy'), warnoutDir);
-
 
         const proceed = await warnIgnoreToolingUsage(ignoreTooling, outputDir, baseDir);
 
@@ -590,24 +603,20 @@ export const commandHandlers: Record<string, CommandHandler> = {
             process.exit(0);
         }
 
-
         if (!(await confirmProceed(outputDir))) {
             console.log(theme.muted(`${icons.info} Generation cancelled.`));
             return;
         }
 
-
-
         const ignoreList = getIgnoreList();
-
-
         const logLines: string[] = [];
         let totalOps = 0;
 
-        await generateFS(structure.root, outputDir, {
+        const failedFiles = await generateFS(structure.root, outputDir, {
             dryRun,
             ignoreList,
             copyContents,
+            ref: hasRef ? refValue : undefined,
             onStart(total) {
                 totalOps = total;
                 bar.start(total);
@@ -618,45 +627,57 @@ export const commandHandlers: Record<string, CommandHandler> = {
                     path: e.path,
                     count: e.count,
                 });
-
                 logLines.push(`${e.type.toUpperCase()} ${e.path}`);
             },
         });
 
         bar.stop();
-        const scaffoldOutput = path.join(outputDir, '.scaffoldrite')
 
+        if (failedFiles.length > 0) {
+            console.log(`\n${icons.warning} ${theme.warning("Note:")} Some files could not be retrieved from git "${refValue}":`);
+            failedFiles.forEach(file => {
+                console.log(`  ${theme.muted("-")} ${theme.highlight(file)} ${theme.muted("(created empty file)")}`);
+            });
+            console.log(theme.muted("Tip: This usually happens with gitignored files or files not present in that commit.\n"));
+        }
 
-
+        const scaffoldOutput = path.join(outputDir, '.scaffoldrite');
 
         if (!dryRun) {
             if (ignoreTooling) {
-                // DELETE the .scaffoldrite directory
                 if (fs.existsSync(scaffoldOutput)) {
                     fs.rmSync(scaffoldOutput, {
                         recursive: true,
                         force: true,
                     });
                 }
-
             } else {
+                if (hasRef) {
+                    const folderInGit = ".scaffoldrite";
+                    const destFolder = path.resolve(outputDir);
 
-                const structureSrc = path.join(process.cwd(), ".scaffoldrite", "structure.sr");
-                const ignoreSrc = path.join(process.cwd(), ".scaffoldrite", ".scaffoldignore");
+                    try {
+                        execSync(`git archive ${refValue} ${folderInGit} | tar -x -C ${destFolder}`, {
+                            stdio: ["ignore", "ignore", "ignore"],
+                        });
+                        console.log(theme.success(`${icons.check} Successfully synced metadata from ${refValue}`));
+                    } catch (err) {
+                        // If syncing metadata fails, we just ensure the dir exists
+                        const scaffoldDir = path.join(outputDir, ".scaffoldrite");
+                        if (!fs.existsSync(scaffoldDir)) fs.mkdirSync(scaffoldDir, { recursive: true });
+                    }
+                } else {
+                    const scaffoldDir = path.join(outputDir, ".scaffoldrite");
+                    if (!fs.existsSync(scaffoldDir)) fs.mkdirSync(scaffoldDir, { recursive: true });
 
-                // Destination folder (inside outputDir)
-                const scaffoldDir = path.join(outputDir, ".scaffoldrite");
-                if (!fs.existsSync(scaffoldDir)) fs.mkdirSync(scaffoldDir, { recursive: true });
+                    const structureSrc = path.join(process.cwd(), ".scaffoldrite", "structure.sr");
+                    const ignoreSrc = path.join(process.cwd(), ".scaffoldrite", ".scaffoldignore");
 
-                // Copy
-                fs.copyFileSync(structureSrc, path.join(scaffoldDir, "structure.sr"));
-                fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
-
+                    if (fs.existsSync(structureSrc)) fs.copyFileSync(structureSrc, path.join(scaffoldDir, "structure.sr"));
+                    if (fs.existsSync(ignoreSrc)) fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
+                }
             }
         }
-
-
-
 
         if (verbose) {
             console.log(theme.primary.bold(`\n📋 Detailed Operations:`));
@@ -854,16 +875,13 @@ export const commandHandlers: Record<string, CommandHandler> = {
         const structure = loadAST();
         validateConstraints(structure.root, structure.constraints);
 
-        // 1️⃣ determine old path and new path
         const oldPath = arg3;
         const newName = arg4;
         const outputDir = path.resolve(baseDir);
 
-        // Build full paths
         const oldFullPath = path.join(outputDir, oldPath);
         const newFullPath = path.join(outputDir, path.join(path.dirname(oldPath), newName));
 
-        // 2️⃣ Rename on filesystem first (safe)
         const renamed = renameFSItem(oldFullPath, newFullPath);
 
         if (!renamed) {
@@ -925,51 +943,51 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
     lock: async () => {
-    
-    if (hasFlag("--git")) {
-        installGitLock(baseDir, { prePush });
-        return;
-    }
 
-    if (hasFlag("--structure")) {
-        installStructureLock();
-        return;
-    }
+        if (hasFlag("--git")) {
+            installGitLock(baseDir, { prePush });
+            return;
+        }
 
-    if (hasFlag("--ci")) {
-        console.log('sjsjsj')
-        enableCI();
-        return;
-    }
+        if (hasFlag("--structure")) {
+            installStructureLock();
+            return;
+        }
 
-    console.log("Please specify a lock type:");
-    console.log("  scaffoldrite lock --git");
-    console.log("  scaffoldrite lock --structure");
-    console.log("  scaffoldrite lock --ci");
-},
+        if (hasFlag("--ci")) {
+            console.log('sjsjsj')
+            enableCI();
+            return;
+        }
+
+        console.log(theme.error(`${icons.info} Please specify a lock type:`));
+        console.log(theme.muted(`  scaffoldrite unlock --git`));
+        console.log(theme.muted(`  scaffoldrite unlock --structure`));
+        console.log(theme.muted(`  scaffoldrite unlock --ci`));
+    },
 
     unlock: async () => {
 
-    if (hasFlag("--git")) {
-        removeGitLock(baseDir, { prePush });
-        return;
-    }
+        if (hasFlag("--git")) {
+            removeGitLock(baseDir, { prePush });
+            return;
+        }
 
-    if (hasFlag("--structure")) {
-        removeStructureLock();
-        return;
-    }
+        if (hasFlag("--structure")) {
+            removeStructureLock();
+            return;
+        }
 
-    if (hasFlag("--ci")) {
-        disableCI();
-        return;
-    }
+        if (hasFlag("--ci")) {
+            disableCI();
+            return;
+        }
 
-    console.log("Please specify a lock type:");
-    console.log("  scaffoldrite unlock --git");
-    console.log("  scaffoldrite unlock --structure");
-    console.log("  scaffoldrite unlock --ci");
-},
+        console.log(theme.error(`${icons.info} Please specify a lock type:`));
+        console.log(theme.muted(`  scaffoldrite unlock --git`));
+        console.log(theme.muted(`  scaffoldrite unlock --structure`));
+        console.log(theme.muted(`  scaffoldrite unlock --ci`));
+    },
     doctor: async () => {
         doctorCommand(baseDir);
     },

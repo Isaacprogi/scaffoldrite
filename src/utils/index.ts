@@ -5,8 +5,18 @@ import { parseStructure } from "../library/parser";
 import readline from "readline";
 import { icons, theme } from "../data";
 import { RequirementContext,MutuallyExclusiveContext } from "../types";
+import { execSync } from "child_process";
 
-export const command = process.argv[2];
+const aliases: Record<string, string> = {
+  gen: "generate",
+  rm: "remove",
+  ls: "list",
+  g:'generate'
+};
+
+
+const commandArg = process.argv[2];
+export const command = aliases[commandArg] ?? commandArg;
 
 export const baseDir = process.cwd()
 
@@ -156,6 +166,56 @@ export function loadAST() {
   return parseStructure(content);
 }
 
+/**
+ * Load AST from a specific git ref (branch, tag, commit)
+ * @param ref - Git reference (branch name, tag, or commit hash). Defaults to 'origin/main'
+ * @param filePath - Path to the structure file within the repo. Defaults to '.scaffoldrite/structure.sr'
+ */
+export function loadASTFromRef(
+  ref: string = 'origin/main', 
+  filePath: string = '.scaffoldrite/structure.sr'
+) {
+  try {
+    // Execute git show and get output as Buffer
+    const buffer = execSync(`git show ${ref}:${filePath}`, {
+      maxBuffer: 10 * 1024 * 1024, // 10MB safety limit
+      timeout: 30000, // 30 second timeout
+    });
+
+    // Strip UTF-8 BOM if present (EF BB BF)
+    let content: string;
+    if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+      content = buffer.slice(3).toString('utf-8');
+    } else {
+      content = buffer.toString('utf-8');
+    }
+
+    // Defensive: strip replacement characters from previous corruptions
+    content = content.replace(/^\uFFFD+/, '');
+    
+    // Normalize line endings
+    content = content.replace(/\r\n/g, '\n');
+
+    return parseStructure(content);
+  } catch (error: any) {
+    if (error.status === 128) {
+      throw new Error(
+        `Git ref not found: "${ref}"\n` +
+        `Make sure the branch/tag exists and you've fetched from remote:\n` +
+        `  git fetch origin`
+      );
+    }
+    if (error.message?.includes('does not exist')) {
+      throw new Error(
+        `Structure file not found at "${filePath}" in ref "${ref}"\n` +
+        `Make sure the file exists in that branch.`
+      );
+    }
+    throw error;
+  }
+}
+
+
 export function printTree(
   node: FolderNode,
   prefix = "",
@@ -269,7 +329,11 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   init: ["--force", "--empty", "--from-fs", "--migrate"],
   update: ["--from-fs", "--yes", "-y"],
   merge: ["--from-fs", "--yes", "-y"],
-  validate: ["--allow-extra"],
+  validate: [
+  "--rules",
+  "--allow-extra",
+   '--ref',
+],
   generate: [
     "--yes",
     "--dry-run",
@@ -277,12 +341,13 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--summary",
     "--ignore-tooling",
     "--copy",
+    '--ref',
   ],
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
-  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon"],
-  find: ["--structure", "--sr", "--fs"], // ✅ updated
+  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",'--ref'],
+  find: ["--structure", "--sr", "--fs",'--ref'],
   version: [],
    // New commands for hooks
   lock: ["--pre-push",'--git','--structure', "--sr", '--ci'],   
@@ -355,8 +420,12 @@ Usage:
 export const ALLOWED_COMMANDS = [
   'init', 'update', 'merge', 'validate', 'generate',
   'create', 'delete', 'rename', 'list', 'find',
-  'version', 'lock', 'unlock', 'doctor',"deps" 
+  'version', 'lock', 'unlock', 'doctor',"deps",'gen' 
 ]
+
+
+
+
 
 export function structureToSRString(root: FolderNode, rawConstraints: string[]): string {
   sortTree(root);

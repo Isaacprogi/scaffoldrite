@@ -1,3 +1,8 @@
+folder .github {
+  folder workflows {
+    file scaffoldrite.yml
+  }
+}
 folder .husky {
   folder _ {
     file .gitignore
@@ -30,13 +35,12 @@ folder src {
   folder library {
     folder commands {
       file doctor.ts
-      file lock.ts
-      file unlock.ts
     }
     folder core {
       file deps.ts
       file gitHooks.ts
       file graph-server.ts
+      file lock.ts
     }
     file ast.ts
     file commandHandler.ts

@@ -8,13 +8,16 @@ import {
   isPreCommitHookEnabled,
   isPrePushHookEnabled
 } from "./lock";
+import { icons, theme } from "../../data";
 
 const START_MARKER = "# >>> scaffoldrite-structure-lock >>>";
 const END_MARKER = "# <<< scaffoldrite-structure-lock <<<";
 
 function ensureGitRepo(baseDir: string) {
   if (!fs.existsSync(path.join(baseDir, ".git"))) {
-    throw new Error("Not inside a Git repository.");
+    throw new Error(
+      theme.error(`${icons.error} Not inside a Git repository.`)
+    );
   }
 }
 
@@ -30,7 +33,7 @@ ${START_MARKER}
 # Scaffoldrite structure validation
 scaffoldrite validate
 if [ $? -ne 0 ]; then
-  echo "❌ Scaffoldrite structure validation failed."
+  echo "${theme.error(`${icons.cross} Scaffoldrite structure validation failed.`)}"
   exit 1
 fi
 ${END_MARKER}
@@ -39,7 +42,7 @@ ${END_MARKER}
 
 /* ==============================
    INSTALL HOOK
-============================== */
+============================= */
 export function installGitLock(baseDir: string, options?: { prePush?: boolean }) {
   ensureGitRepo(baseDir);
 
@@ -60,22 +63,27 @@ export function installGitLock(baseDir: string, options?: { prePush?: boolean })
   if (fs.existsSync(hookPath)) {
     existingContent = fs.readFileSync(hookPath, "utf-8");
     if (existingContent.includes(START_MARKER)) {
-      console.log(`Scaffoldrite already installed in ${hookName}.`);
+      console.log(
+        theme.accent(`${icons.lock} Scaffoldrite already installed in ${hookName}.`)
+      );
       return;
     }
   } else {
+    
     existingContent = "#!/bin/sh\n";
   }
 
   const newContent = existingContent.trimEnd() + "\n" + snippet;
   fs.writeFileSync(hookPath, newContent, { mode: 0o755 });
 
-  console.log(`✅ Scaffoldrite installed in ${hookName}.`);
+  console.log(
+    theme.success(`${icons.lock} Scaffoldrite installed in ${hookName}.`)
+  );
 }
 
 /* ==============================
    REMOVE HOOK
-============================== */
+============================= */
 export function removeGitLock(baseDir: string, options?: { prePush?: boolean }) {
   ensureGitRepo(baseDir);
 
@@ -90,13 +98,17 @@ export function removeGitLock(baseDir: string, options?: { prePush?: boolean }) 
 
   const hookPath = getHookPath(baseDir, hookName);
   if (!fs.existsSync(hookPath)) {
-    console.log(`No ${hookName} hook found.`);
+    console.log(
+      theme.warning(`${icons.warning} No ${hookName} hook found.`)
+    );
     return;
   }
 
   const content = fs.readFileSync(hookPath, "utf-8");
   if (!content.includes(START_MARKER)) {
-    console.log("Scaffoldrite hook not found.");
+    console.log(
+      theme.warning(`${icons.warning} Scaffoldrite hook not found.`)
+    );
     return;
   }
 
@@ -106,16 +118,20 @@ export function removeGitLock(baseDir: string, options?: { prePush?: boolean }) 
 
   if (cleaned === "" || cleaned === "#!/bin/sh") {
     fs.unlinkSync(hookPath);
-    console.log(`🗑 ${hookName} removed completely.`);
+    console.log(
+      theme.accent(`${icons.unlock} ${hookName} removed completely.`)
+    );
   } else {
     fs.writeFileSync(hookPath, cleaned, { mode: 0o755 });
-    console.log(`🧹 Scaffoldrite removed from ${hookName}.`);
+    console.log(
+      theme.accent(`${icons.unlock} Scaffoldrite removed from ${hookName}.`)
+    );
   }
 }
 
 /* ==============================
    CHECK HOOK
-============================== */
+============================= */
 export function isGitLockInstalled(
   baseDir: string,
   hookName: "pre-commit" | "pre-push"

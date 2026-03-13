@@ -47,4 +47,6 @@ export const icons = {
   cross: theme.error('❌'),
   star: theme.accent('⭐'),
   fire: theme.warning('🔥'),
+  lock: theme.accent('🔒'),   // added lock icon
+  unlock: theme.success('🔓'), // added unlock icon
 };

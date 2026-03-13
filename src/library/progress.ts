@@ -11,6 +11,7 @@ interface ProgressBarControls {
   start: (total: number) => void;
   update: (e: ProgressUpdate) => void;
   stop: () => void;
+  log: (message: string) => void; 
 }
 
 export function createProgressBar(): ProgressBarControls {
@@ -31,6 +32,7 @@ export function createProgressBar(): ProgressBarControls {
       clearOnComplete: false,
       stopOnComplete: true,
       barsize: 40,
+      forceRedraw: true, 
     },
     cliProgress.Presets.shades_classic
   );
@@ -52,7 +54,6 @@ export function createProgressBar(): ProgressBarControls {
     update(e: ProgressUpdate) {
       const percentage = Math.floor((e.count / totalOps) * 100);
       
-      // Dynamically update format based on progress
       if (percentage === 100) {
         const elapsedSeconds = Math.round((Date.now() - startTime) / 1000);
         bar.update(e.count, {
@@ -60,9 +61,6 @@ export function createProgressBar(): ProgressBarControls {
           path: `Finished in ${elapsedSeconds}s`,
           percentage: percentage,
         });
-        
-        // Use a different format for completion
-        bar.setTotal(totalOps);
       } else {
         bar.update(e.count, {
           type: e.type.toUpperCase(),
@@ -72,8 +70,19 @@ export function createProgressBar(): ProgressBarControls {
       }
     },
 
+    log(message: string) {
+      // This helper prevents the "double bar" by clearing the line first
+      readline.clearLine(process.stdout, 0);
+      readline.cursorTo(process.stdout, 0);
+      console.log(message);
+    },
+
     stop() {
       bar.stop();
     },
   };
 }
+
+// Note: Ensure 'readline' is available if using the log helper, 
+// otherwise standard console.warn works better with forceRedraw enabled.
+import readline from "readline";
