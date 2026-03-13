@@ -22,7 +22,7 @@ function ensureGitRepo(baseDir: string) {
 }
 
 function getHookPath(baseDir: string, hookName: string): string {
-  const huskyPath = path.join(baseDir, ".husky", hookName);
+  const huskyPath = path.join(baseDir, ".husky","_", hookName);
   const gitPath = path.join(baseDir, ".git", "hooks", hookName);
   return fs.existsSync(huskyPath) ? huskyPath : gitPath;
 }

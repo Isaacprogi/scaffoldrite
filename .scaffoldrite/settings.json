@@ -1,6 +1,6 @@
 {
   "ciEnabled": true,
   "preCommitEnabled": true,
-  "prePushEnabled": true,
+  "prePushEnabled": false,
   "structureLocked": false
 }
