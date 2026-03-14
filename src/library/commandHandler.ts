@@ -10,26 +10,26 @@ import { validateFS } from "./validateFS";
 import { buildASTFromFS } from "./fsToAst";
 import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from '../data/index'
 const pkg = require("../../package.json");
-import { ALLOWED_COMMANDS, getIgnoreList, loadASTFromRef, warnIgnoreToolingUsage } from "../utils/index";
+import { ALLOWED_COMMANDS, getIgnoreList, loadASTFromRef, warnIgnoreToolingUsage } from "../lib/utils/index";
 import { createProgressBar } from "./progress";
 // import { Operation } from "../types/index";
 import {
     flattenTree, loadConstraints, hasFlag, getPassedFlags, getFlagValuesAfter,
     loadAST, confirmProceed, saveStructure, filterTreeByIgnore, printTree, printTreeWithIcons,
     renameFSItem, ALLOWED_FLAGS, printUsage
-} from "../utils/index";
+} from "../lib/utils/index";
 import { HistoryEntry } from "../types/index";
 // import { structureToSRString } from "./utils/index";
 // import { v4 as uuidv4 } from "uuid";
 // import chalk from "chalk";
 import { icons, theme } from "../data/index";
-import { runRequirements, checkMutuallyExclusiveFlags } from "../utils/index";
-import { SCAFFOLDRITE_DIR, STRUCTURE_PATH, IGNORE_PATH } from "../utils/index";
-import { baseDir } from "../utils/index";
-import { exit } from "../utils/index";
+import { runRequirements, checkMutuallyExclusiveFlags } from "../lib/utils/index";
+import { SCAFFOLDRITE_DIR, STRUCTURE_PATH, IGNORE_PATH } from "../lib/utils/index";
+import { baseDir } from "../lib/utils/index";
+import { exit } from "../lib/utils/index";
 import { CommandHandler } from "../types/index";
-import { command } from "../utils/index";
-import { warnCopyWithoutOutput } from "../utils/index";
+import { command } from "../lib/utils/index";
+import { warnCopyWithoutOutput } from "../lib/utils/index";
 import { doctorCommand } from "./commands/doctor";
 import { buildDependencyGraph, printDependencyTree, findStandaloneFiles, detectCircular, printCircular, buildGraphFromStructure } from "./core/deps";
 import { startServer } from "./core/graph-server";
@@ -43,7 +43,7 @@ import { installGitLock, removeGitLock } from "./core/gitHooks";
 import { preventIfStructureLocked } from "./core/lock";
 import { execSync } from "child_process";
 import { buildASTFromGit } from "./fsToAst";
-import { applyConfigSettings } from "./core/lock"; 
+import { applyConfigSettings } from "./core/lock";
 
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
@@ -101,10 +101,10 @@ const showCircular = hasFlag("--circular");
 const showStandalone = hasFlag("--standalone");
 const showJSON = hasFlag("--json");
 const serve = hasFlag("--serve");
-const onlyAgainst = hasFlag("--only"); 
-  
+const onlyAgainst = hasFlag("--only");
+
 const hasAgainst = hasFlag("--against");
-const againstValue = arg3 || "origin/main";
+const againstValue = getFlagValuesAfter("--against")[0] || "origin/main";
 
 
 if (!command || command === "--help" || command === "-h") {
@@ -114,7 +114,7 @@ if (!command || command === "--help" || command === "-h") {
 
 
 if (!ALLOWED_COMMANDS.includes(command)) {
-    console.error(`✗ Unknown command: ${command}`);
+     console.error(theme.error.bold(`${icons.error} Unknown command: ${command}`));
     printUsage();
     process.exit(1);
 }
@@ -168,13 +168,14 @@ runRequirements({
 
 export const commandHandlers: Record<string, CommandHandler> = {
     version: () => {
-        console.log(
-            theme.primary.bold('Scaffoldrite') +
-            theme.muted(' v') +
-            theme.light.bold(pkg.version)
-        );
-        exit(0);
-    },
+    console.log(
+        theme.primary.bold('Scaffoldrite') +
+        theme.muted(' v') +
+        theme.light.bold(pkg.version)
+    );
+    console.log(theme.info(`ℹ️ Run \`scaffoldrite changelog\` to see what’s new in this version.`));
+    exit(0);
+},
 
     // history:async()=> {
 
@@ -340,7 +341,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return;
     },
     merge: async () => {
-        await preventIfStructureLocked("merge"); 
+        await preventIfStructureLocked("merge");
 
         if (!fs.existsSync(STRUCTURE_PATH)) {
             console.error(theme.error.bold(`${icons.error} Error: structure.sr not found. Run \`scaffoldrite init\` first.`));
@@ -393,9 +394,9 @@ export const commandHandlers: Record<string, CommandHandler> = {
         let structure;
 
         if (hasAgainst) {
-    structure = loadASTFromRef(againstValue);
-    console.log(theme.info(`${icons.info} Retrieving list from ${againstValue}`));
-}else {
+            structure = loadASTFromRef(againstValue);
+            console.log(theme.info(`${icons.info} Retrieving list from ${againstValue}`));
+        } else {
             structure = loadAST();
             console.log(theme.info(`${icons.info} Loading default list structure`));
         }
@@ -442,8 +443,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
         if (isFS) {
             const fsAst = hasAgainst
-    ? buildASTFromGit(againstValue, ignoreList)
-    : buildASTFromFS(targetDir, ignoreList);
+                ? buildASTFromGit(againstValue, ignoreList)
+                : buildASTFromFS(targetDir, ignoreList);
 
             console.log(theme.secondary.bold(`${icons.folder} filesystem (`) + theme.light(targetDir) + theme.secondary.bold(`)`));
             console.log(theme.muted(`Ignoring: `) + theme.accent(ignoreList.join(", ")) + theme.muted(`\n`));
@@ -492,12 +493,12 @@ export const commandHandlers: Record<string, CommandHandler> = {
     validate: async () => {
         let structure;
 
-         if (hasAgainst) {
-    structure = loadASTFromRef(againstValue);
-    console.log(theme.info(`${icons.info} Validating against ${againstValue}`));
-} else {
-    structure = loadAST();
-}
+        if (hasAgainst) {
+            structure = loadASTFromRef(againstValue);
+            console.log(theme.info(`${icons.info} Validating against ${againstValue}`));
+        } else {
+            structure = loadAST();
+        }
 
         const outputDir = path.resolve(baseDir);
         const ignoreList = getIgnoreList();
@@ -523,6 +524,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
 
     find: async () => {
+        let structure;
+
         const searchQuery = arg3;
         if (!searchQuery) {
             console.error(theme.error.bold(`${icons.error} Please provide a file, folder, or path to find.`));
@@ -533,11 +536,25 @@ export const commandHandlers: Record<string, CommandHandler> = {
         const results: string[] = [];
         const ignoreList = getIgnoreList();
 
-        const searchStructure = isStructure || (!isStructure && !isFS); // default searches both
+        const searchStructure = isStructure || (!isStructure && !isFS);
         const searchFilesystem = isFS || (!isStructure && !isFS);
 
+        !isStructure && !isFS &&
+            console.log(
+                theme.info(
+                    `${icons.info} Searching both structure.sr and filesystem for: ${theme.highlight(searchQuery)} from ${hasAgainst ? againstValue : "current state"
+                    }${theme.muted("\nUse --structure or --fs to search a specific source.")}`
+                )
+            );
+
         if (searchStructure && fs.existsSync(STRUCTURE_PATH)) {
-            const structure = loadAST();
+            if (hasAgainst) {
+                structure = loadASTFromRef(againstValue);
+                isStructure && console.log(theme.info(`${icons.info} Searching structure.sr from ${againstValue}`));
+            } else {
+                structure = loadAST();
+            }
+
 
             function searchAST(node: FolderNode, currentPath = "") {
                 for (const child of node.children) {
@@ -554,7 +571,10 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
 
         if (searchFilesystem) {
-            const fsAst = buildASTFromFS(baseDir, ignoreList);
+            isFS && console.log(theme.info(`${icons.info} Searching filesystem from ${hasAgainst ? againstValue : "current state"}`));
+            const fsAst = hasAgainst
+                ? buildASTFromGit(againstValue, ignoreList)
+                : buildASTFromFS(baseDir, ignoreList);
 
             function searchFSAST(node: FolderNode, currentPath = "") {
                 for (const child of node.children) {
@@ -583,17 +603,19 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
         let structure;
         if (hasAgainst) {
-    structure = loadASTFromRef(againstValue);
-    console.log(theme.info(`${icons.info} Generating from ${againstValue}`));
-}
-      else {
+            structure = loadASTFromRef(againstValue);
+            console.log(theme.info(`${icons.info} Generating from ${againstValue}`));
+        }
+        else {
             structure = loadAST();
         }
 
         validateConstraints(structure.root, structure.constraints);
 
-        const outputDir = path.resolve(hasAgainst ? (arg4 ?? baseDir) : (arg3 ?? baseDir));
-        const warnoutDir = path.resolve(hasAgainst ? (arg4 ?? baseDir) : (arg3 ?? baseDir));
+        const outputDir = path.resolve(arg3 ?? baseDir);
+        const warnoutDir = path.resolve(arg3 ?? baseDir);
+
+        console.log(outputDir,warnoutDir)
 
         warnCopyWithoutOutput(hasFlag('--copy'), warnoutDir);
 
@@ -956,14 +978,14 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
 
         if (hasFlag("--ci")) {
-            enableCI({ref: againstValue, onlyAgainst, hasAgainst});
+            enableCI({ ref: againstValue, onlyAgainst, hasAgainst });
             return;
         }
-          if (hasFlag("--config")) {
-            console.log(theme.warning(`${icons.warning} Warning: This will remove all Scaffoldrite-related config settings. Use with caution.`));
-        await applyConfigSettings(baseDir, { ref: againstValue, onlyAgainst, hasAgainst });
-        return;
-          }
+        if (hasFlag("--config")) {
+            console.log(theme.warning(`${icons.warning} Warning: This may remove Scaffoldrite-related config settings. Use with caution.`));
+            await applyConfigSettings(baseDir, { ref: againstValue, onlyAgainst, hasAgainst });
+            return;
+        }
 
         console.log(theme.error(`${icons.info} Please specify a lock type:`));
         console.log(theme.muted(`  scaffoldrite unlock --git`));
@@ -1046,4 +1068,23 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
 
     },
+
+    changelog: async () => {
+    console.log(theme.primary.bold(`\n📝 Scaffoldrite v${pkg.version} Changelog\n`));
+    console.log(theme.muted(`─`.repeat(50)));
+
+    console.log(theme.success(`✨ New Features:`));
+    console.log(theme.light(`- Added 'deps' command with circular/standalone detection`));
+    console.log(theme.light(`- Improved 'generate' with ignore-tooling handling`));
+    console.log(theme.light(`- Added 'lock' and 'unlock' for CI/git/structure`));
+
+    console.log(theme.warning(`⚠️ Improvements:`));
+    console.log(theme.light(`- Better validation messages`));
+    console.log(theme.light(`- Enhanced progress bar for generation`));
+
+    console.log(theme.info(`ℹ️ Bug Fixes:`));
+    console.log(theme.light(`- Fixed rename edge cases`));
+    console.log(theme.light(`- Fixed copy-from-git for empty dirs`));
+    process.exit(0);
+}
 };

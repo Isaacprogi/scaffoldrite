@@ -1,5 +1,5 @@
 import { HistoryEntry } from "../types";
-import { SCAFFOLDRITE_DIR } from "../utils";
+import { SCAFFOLDRITE_DIR } from "../lib/utils";
 import path from "node:path";
 import fs from "fs";
 

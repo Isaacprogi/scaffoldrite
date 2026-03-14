@@ -1,6 +1,6 @@
 import { theme,icons } from "../data";
 import { CommandHandler } from "../types";
-import { exit } from "../utils";
+import { exit } from "../lib/utils";
 
 export async function main(cmd: string,commandHandlers:Record<string, CommandHandler>) {
   const handler = commandHandlers[cmd];

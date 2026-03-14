@@ -1,10 +1,10 @@
-import { FolderNode } from "../library/ast";
+import { FolderNode } from "../../library/ast";
 import fs from "fs";
 import path from "path";
-import { parseStructure } from "../library/parser";
+import { parseStructure } from "../../library/parser";
 import readline from "readline";
-import { icons, theme } from "../data";
-import { RequirementContext,MutuallyExclusiveContext } from "../types";
+import { icons, theme } from "../../data";
+import { RequirementContext,MutuallyExclusiveContext } from "../../types";
 import { execSync } from "child_process";
 
 const aliases: Record<string, string> = {
@@ -347,7 +347,7 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
   list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",'--against'],
-  find: ["--structure", "--sr", "--fs"],
+  find: ["--structure", "--sr", "--fs",'--against'],
   version: [],
    // New commands for hooks
   lock: ["--pre-push",'--git','--structure', "--sr", '--ci','--against','--only','--config'],   
@@ -360,7 +360,11 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   "--json",
   "--serve",
   "--fs"
-]
+],
+ changelog: [
+  "--json",
+  "--serve",
+ ]
 };
 
 export function printUsage(cmd?: string) {
@@ -381,6 +385,7 @@ export function printUsage(cmd?: string) {
     lock: "[--pre-push]    Install pre-commit (default) or pre-push hook",
     unlock: "[--pre-push]    Remove pre-commit (default) or pre-push hook",
     doctor: "              Verify hook health",
+    changelog:  "[--json] [--serve]"
   };
 
   if (cmd && argsMap[cmd]) {
@@ -420,7 +425,7 @@ Usage:
 export const ALLOWED_COMMANDS = [
   'init', 'update', 'merge', 'validate', 'generate',
   'create', 'delete', 'rename', 'list', 'find',
-  'version', 'lock', 'unlock', 'doctor',"deps",'gen' 
+  'version', 'lock', 'unlock', 'doctor',"deps",'changelog'
 ]
 
 
@@ -581,7 +586,7 @@ export function warnCopyWithoutOutput(copy: boolean, outputDir?: string) {
   if (!outputDir || path.resolve(outputDir) === path.resolve(baseDir)) {
     console.log(
       theme.warning(
-        `${icons.warning} --copy is not used on the root . ` +
+        `${icons.warning} --copy is not used on the root ` +
         `.`
       )
     );
@@ -635,4 +640,8 @@ export async function warnIgnoreToolingUsage(
 
   return await confirmPrompt("Proceed and apply changes? (y/N): ");
 }
+
+
+
+
 

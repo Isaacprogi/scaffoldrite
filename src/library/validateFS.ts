@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { FolderNode } from "./ast";
-import { isIgnored } from "../utils/index";
+import { isIgnored } from "../lib/utils";
 import { theme, icons } from "../data/index";
 
 export function validateFS(

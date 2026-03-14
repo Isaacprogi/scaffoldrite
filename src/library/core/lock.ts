@@ -1,9 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { SCAFFOLDRITE_DIR, exit } from "../../utils";
+import { SCAFFOLDRITE_DIR, exit } from "../../lib/utils";
 import { theme, icons } from "../../data";
 import { getWorkflowContent } from "./ci";
-import { confirmPrompt } from "../../utils";
 import {installGitLock,removeGitLock} from './gitHooks'
 
 const SETTINGS_FILE = path.join(SCAFFOLDRITE_DIR, "settings.json");
