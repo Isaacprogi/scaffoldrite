@@ -23,6 +23,7 @@ folder .husky {
     file pre-rebase
     file prepare-commit-msg
   }
+  file pre-commit
 }
 folder public {
   file scaffoldrite-banner.png
@@ -31,6 +32,14 @@ folder public {
 folder src {
   folder data {
     file index.ts
+  }
+  folder lib {
+    folder logs {
+      file index.ts
+    }
+    folder utils {
+      file index.ts
+    }
   }
   folder library {
     folder commands {
@@ -58,9 +67,6 @@ folder src {
     file visitor.ts
   }
   folder types {
-    file index.ts
-  }
-  folder utils {
     file index.ts
   }
   file cli.ts

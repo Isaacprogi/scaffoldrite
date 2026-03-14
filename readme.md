@@ -1,4 +1,4 @@
-# Scaffoldrite: Define. Enforce. Generate. 🏗️
+# Scaffoldrite: Define. Enforce. Generate.
 
 > *Structure the right way*
 
