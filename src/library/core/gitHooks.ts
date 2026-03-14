@@ -21,10 +21,25 @@ function ensureGitRepo(baseDir: string) {
   }
 }
 
-function getHookPath(baseDir: string, hookName: string): string {
-  const huskyPath = path.join(baseDir, ".husky","_", hookName);
-  const gitPath = path.join(baseDir, ".git", "hooks", hookName);
-  return fs.existsSync(huskyPath) ? huskyPath : gitPath;
+
+function getHookPath(baseDir: string, hookName: string): { path: string; type: "husky" | "git" } {
+  const huskyDir = path.join(baseDir, ".husky");
+  const huskyHookPath = path.join(huskyDir, hookName);
+  const gitHookPath = path.join(baseDir, ".git", "hooks", hookName);
+  
+  const hasHusky = fs.existsSync(huskyDir);
+  
+  if (hasHusky) {
+    const isHuskyV8 = fs.existsSync(path.join(huskyDir, hookName, hookName));
+    
+    if (isHuskyV8) {
+      return { path: path.join(huskyDir, hookName, hookName), type: "husky" };
+    }
+    
+    return { path: huskyHookPath, type: "husky" };
+  }
+  
+  return { path: gitHookPath, type: "git" };
 }
 
 function buildHookSnippet(): string {
@@ -40,9 +55,7 @@ ${END_MARKER}
 `;
 }
 
-/* ==============================
-   INSTALL HOOK
-============================= */
+
 export function installGitLock(baseDir: string, options?: { prePush?: boolean }) {
   ensureGitRepo(baseDir);
 
@@ -56,55 +69,51 @@ export function installGitLock(baseDir: string, options?: { prePush?: boolean })
   }
 
   // Install hook snippet
-  const hookPath = getHookPath(baseDir, hookName);
+  const hookInfo = getHookPath(baseDir, hookName);
   const snippet = buildHookSnippet();
 
   let existingContent = "";
-  if (fs.existsSync(hookPath)) {
-    existingContent = fs.readFileSync(hookPath, "utf-8");
+  if (fs.existsSync(hookInfo.path)) {
+    existingContent = fs.readFileSync(hookInfo.path, "utf-8");
     if (existingContent.includes(START_MARKER)) {
       console.log(
-        theme.accent(`${icons.lock} Scaffoldrite already installed in ${hookName}.`)
+        theme.accent(`${icons.lock} Scaffoldrite already installed in ${hookName} (${hookInfo.type} hook).`)
       );
       return;
     }
   } else {
-    
     existingContent = "#!/bin/sh\n";
   }
 
   const newContent = existingContent.trimEnd() + "\n" + snippet;
-  fs.writeFileSync(hookPath, newContent, { mode: 0o755 });
+  fs.writeFileSync(hookInfo.path, newContent, { mode: 0o755 });
 
   console.log(
-    theme.success(`${icons.lock} Scaffoldrite installed in ${hookName}.`)
+    theme.success(`${icons.lock} Scaffoldrite installed in ${hookName} (${hookInfo.type} hook).`)
   );
 }
 
-/* ==============================
-   REMOVE HOOK
-============================= */
+
 export function removeGitLock(baseDir: string, options?: { prePush?: boolean }) {
   ensureGitRepo(baseDir);
 
   const hookName = options?.prePush ? "pre-push" : "pre-commit";
 
-  // Update settings
   if (options?.prePush) {
     disablePrePushHook();
   } else {
     disablePreCommitHook();
   }
 
-  const hookPath = getHookPath(baseDir, hookName);
-  if (!fs.existsSync(hookPath)) {
+  const hookInfo = getHookPath(baseDir, hookName);
+  if (!fs.existsSync(hookInfo.path)) {
     console.log(
       theme.warning(`${icons.warning} No ${hookName} hook found.`)
     );
     return;
   }
 
-  const content = fs.readFileSync(hookPath, "utf-8");
+  const content = fs.readFileSync(hookInfo.path, "utf-8");
   if (!content.includes(START_MARKER)) {
     console.log(
       theme.warning(`${icons.warning} Scaffoldrite hook not found.`)
@@ -117,21 +126,19 @@ export function removeGitLock(baseDir: string, options?: { prePush?: boolean }) 
     .trim();
 
   if (cleaned === "" || cleaned === "#!/bin/sh") {
-    fs.unlinkSync(hookPath);
+    fs.unlinkSync(hookInfo.path);
     console.log(
-      theme.accent(`${icons.unlock} ${hookName} removed completely.`)
+      theme.accent(`${icons.unlock} ${hookName} removed completely (${hookInfo.type} hook).`)
     );
   } else {
-    fs.writeFileSync(hookPath, cleaned, { mode: 0o755 });
+    fs.writeFileSync(hookInfo.path, cleaned, { mode: 0o755 });
     console.log(
-      theme.accent(`${icons.unlock} Scaffoldrite removed from ${hookName}.`)
+      theme.accent(`${icons.unlock} Scaffoldrite removed from ${hookName} (${hookInfo.type} hook).`)
     );
   }
 }
 
-/* ==============================
-   CHECK HOOK
-============================= */
+
 export function isGitLockInstalled(
   baseDir: string,
   hookName: "pre-commit" | "pre-push"

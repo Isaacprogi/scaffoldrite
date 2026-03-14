@@ -332,7 +332,7 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   validate: [
   "--rules",
   "--allow-extra",
-   '--ref',
+   '--against',
 ],
   generate: [
     "--yes",
@@ -341,16 +341,16 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--summary",
     "--ignore-tooling",
     "--copy",
-    '--ref',
+    '--against',
   ],
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
-  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",'--ref'],
-  find: ["--structure", "--sr", "--fs",'--ref'],
+  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",'--against'],
+  find: ["--structure", "--sr", "--fs"],
   version: [],
    // New commands for hooks
-  lock: ["--pre-push",'--git','--structure', "--sr", '--ci'],   
+  lock: ["--pre-push",'--git','--structure', "--sr", '--ci','--against','--only','--config'],   
   unlock: ["--pre-push",'--git','--structure', "--sr", '--ci'], 
   doctor: [],
  deps: [

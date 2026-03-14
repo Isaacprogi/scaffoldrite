@@ -23,6 +23,8 @@ export function validateFS(
 
   const effectiveIgnoreList = [...ignoreList, ".scaffoldrite"];
 
+  
+
   if (!fs.existsSync(dir)) {
     throw new Error(
       `${icons.error} ${theme.error('Folder does not exist:')} ${theme.highlight(dir)}\n` +
@@ -57,11 +59,12 @@ export function validateFS(
         continue;
       }
 
-      throw new Error(
-        `${icons.error} ${theme.error('Missing in filesystem:')} ${theme.highlight(expectedPath)}\n` +
-        `${theme.muted('Expected according to')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(expectedSrPath)}\n` +
-        `${theme.info('Fix:')} Run ${theme.primary('scaffoldrite generate')} to recreate missing files. This does not restore file contents.`
-      );
+
+     throw new Error(
+  `${icons.error} ${theme.error('Missing in filesystem:')} ${theme.highlight(expectedSrPath)}\n` +
+  `${theme.muted('Expected according to')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(expectedSrPath)}\n` +
+  `${theme.info('Fix:')} Run ${theme.primary('scaffoldrite generate')} to recreate missing files. This does not restore file contents.`
+);
     }
 
     if (child.type === "folder") {
@@ -119,11 +122,12 @@ export function validateFS(
       }
 
       throw new Error(
-        `${icons.error} ${theme.error('Extra file/folder found in filesystem:')} ${theme.highlight(extraPath)}\n` +
+        `${icons.error} ${theme.error('Extra file/folder found in filesystem:')} ${theme.highlight(extraRel)}\n` +
         `${theme.muted('Not defined in')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(currentPath || "root")}\n` +
         `${theme.info('Options:')}\n` +
         `  • ${theme.primary('--allow-extra')} to allow all extra files\n` +
         `  • ${theme.primary('--allow-extra ' + extraRel)} to allow this specific file\n` +
+        `  • ${theme.primary('sr update --from-fs .')} to update ${theme.secondary('structure.sr')} from filesystem\n` +
         `  • Delete or move the file to resolve`
       );
     }

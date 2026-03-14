@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import { SCAFFOLDRITE_DIR, exit } from "../../utils";
 import { theme, icons } from "../../data";
+import { getWorkflowContent } from "./ci";
+import { confirmPrompt } from "../../utils";
+import {installGitLock,removeGitLock} from './gitHooks'
 
 const SETTINGS_FILE = path.join(SCAFFOLDRITE_DIR, "settings.json");
 
@@ -24,10 +27,11 @@ function writeSettings(data: Record<string, any>) {
 export function installStructureLock() {
   const settings = readSettings();
 
-  if (settings.structureLocked === false) {
-    console.log(theme.success(`${icons.lock} Structure editing locked.`));
+  // Treat undefined or false as "not locked"
+  if (settings.structureLocked === undefined || settings.structureLocked === false) {
     settings.structureLocked = true;
     writeSettings(settings);
+    console.log(theme.success(`${icons.lock} Structure editing locked.`));
   } else {
     console.log(theme.success(`${icons.lock} Structure editing is already locked.`));
   }
@@ -36,7 +40,8 @@ export function installStructureLock() {
 export function removeStructureLock() {
   const settings = readSettings();
 
-  if (settings.structureLocked === true) {
+  // Treat undefined or true as "locked"
+  if (settings.structureLocked === undefined || settings.structureLocked === true) {
     settings.structureLocked = false;
     writeSettings(settings);
     console.log(theme.success(`${icons.unlock} Structure editing unlocked.`));
@@ -50,69 +55,51 @@ export function isStructureLocked(): boolean {
   return !!settings.structureLocked;
 }
 
-function createCIWorkflow() {
+async function createCIWorkflow(options?: { ref?: string; onlyAgainst?: boolean; hasAgainst?: boolean }) {
   const workflowsDir = path.join(path.dirname(SETTINGS_FILE), "..", ".github", "workflows");
   if (!fs.existsSync(workflowsDir)) fs.mkdirSync(workflowsDir, { recursive: true });
 
   const workflowFile = path.join(workflowsDir, "scaffoldrite.yml");
 
   if (fs.existsSync(workflowFile)) {
-    console.log(theme.success(`✓ CI workflow already exists.`));
+    console.log(theme.info(`ℹ Workflow file already exists at .github/workflows/scaffoldrite.yml, skipping creation.`));
     return;
   }
 
-const workflowContent = `name: Scaffoldrite Validation
-
-on:
-  push:
-  pull_request:
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Validate using PR rules
-        run: npx scaffoldrite validate
-
-      - name: Fetch main branch rules
-        run: git show origin/main:.scaffoldrite/structure.sr > structure-main.sr
-
-      - name: Validate against main rules
-        run: npx scaffoldrite validate --rules structure-main.sr
-`;
-
-  fs.writeFileSync(workflowFile, workflowContent);
-  console.log(theme.success(`✓ Created .github/workflows/scaffoldrite.yml`));
+  fs.writeFileSync(workflowFile, getWorkflowContent(options));
+  console.log(theme.success(`✓ Created .github/workflows/scaffoldrite.yml (${icons.lock} enabled).`));
 }
 
-export function enableCI() {
+export function enableCI(options?: { ref?: string; onlyAgainst?: boolean, hasAgainst?: boolean }) {
   const settings = readSettings();
   settings.ciEnabled = true;
   writeSettings(settings);
-  console.log(theme.success(`${icons.lock} CI validation enabled.`));
-  createCIWorkflow();
+  createCIWorkflow(options);
+}
+
+async function removeCIWorkflow() {
+  const workflowsDir = path.join(path.dirname(SETTINGS_FILE), "..", ".github", "workflows");
+  const workflowFile = path.join(workflowsDir, "scaffoldrite.yml");
+
+  if (fs.existsSync(workflowFile)) {
+    fs.unlinkSync(workflowFile);
+    console.log(theme.success(`✓ Removed .github/workflows/scaffoldrite.yml (${icons.unlock} disabled).`));
+  } else {
+    console.log(theme.info(`ℹ No workflow file found at .github/workflows/scaffoldrite.yml (Already disabled).`));
+  }
 }
 
 export function disableCI() {
   const settings = readSettings();
   settings.ciEnabled = false;
   writeSettings(settings);
-  console.log(theme.success(`${icons.unlock} CI validation disabled.`));
+  removeCIWorkflow()
 }
 
 export function isCIEnabled(): boolean {
   const settings = readSettings();
   return !!settings.ciEnabled;
 }
-
 
 
 export function isPreCommitHookEnabled(): boolean {
@@ -126,7 +113,6 @@ export function enablePreCommitHook() {
   if (!settings.preCommitEnabled) {
     settings.preCommitEnabled = true;
     writeSettings(settings);
-    console.log(theme.success(`${icons.lock} Pre-commit hook enabled.`));
   }
 }
 
@@ -135,7 +121,6 @@ export function disablePreCommitHook() {
   if (settings.preCommitEnabled) {
     settings.preCommitEnabled = false;
     writeSettings(settings);
-    console.log(theme.success(`${icons.unlock} Pre-commit hook disabled.`));
   }
 }
 
@@ -144,7 +129,6 @@ export function enablePrePushHook() {
   if (!settings.prePushEnabled) {
     settings.prePushEnabled = true;
     writeSettings(settings);
-     console.log(theme.success(`${icons.lock} Pre-push hook enabled.`));
   }
 }
 
@@ -153,7 +137,6 @@ export function disablePrePushHook() {
   if (settings.prePushEnabled) {
     settings.prePushEnabled = false;
     writeSettings(settings);
-      console.log(theme.success(`${icons.unlock} Pre-push hook disabled.`));
   }
 }
 
@@ -170,4 +153,55 @@ export async function preventIfStructureLocked(commandName: string) {
     );
     exit(1);
   }
+}
+
+
+export async function applyConfigSettings(baseDir: string, options?: { ref?: string; onlyAgainst?: boolean, hasAgainst?: boolean }) {
+  console.log(theme.info("Applying configuration settings..."));
+  const DEFAULT_SETTINGS = {
+    ciEnabled: true,
+    preCommitEnabled: true,
+    prePushEnabled: false,
+    structureLocked: false
+  };
+
+  // Read current settings or create defaults
+  let settings = readSettings();
+  let settingsExist = Object.keys(settings).length > 0;
+
+  if (!settingsExist) {
+    settings = DEFAULT_SETTINGS;
+    writeSettings(settings);
+    console.log(theme.success(`${icons.lock} Created default settings.`));
+  }
+
+  // Apply CI
+  if (settings.ciEnabled) {
+    enableCI(options);
+  } else {
+    disableCI();
+  }
+
+  // Apply pre-commit hook
+  if (settings.preCommitEnabled) {
+    installGitLock(baseDir, { prePush: false });
+  } else {
+    removeGitLock(baseDir, { prePush: false });
+  }
+
+  // Apply pre-push hook
+  if (settings.prePushEnabled) {
+    installGitLock(baseDir, { prePush: true });
+  } else {
+    removeGitLock(baseDir, { prePush: true });
+  }
+
+  // Apply structure lock
+  if (settings.structureLocked) {
+    installStructureLock();
+  } else {
+    removeStructureLock();
+  }
+
+  console.log(theme.info(`${icons.success} All settings applied according to configuration.`));
 }

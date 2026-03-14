@@ -37,6 +37,7 @@ folder src {
       file doctor.ts
     }
     folder core {
+      file ci.ts
       file deps.ts
       file gitHooks.ts
       file graph-server.ts
