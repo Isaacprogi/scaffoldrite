@@ -77,7 +77,6 @@ folder src {
     file .gitignore
     file eslint.config.js
     file index.html
-    file package-lock.json
     file package.json
     file postcss.config.js
     file README.md
@@ -133,8 +132,6 @@ folder tests {
 }
 file .gitignore
 file jest.config.mjs
-file package-lock.json
 file package.json
 file readme.md
 file tsconfig.json
-file link.ts
