@@ -31,7 +31,7 @@
 /* Global scrollbar styles - applies to ALL scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #ec4899 #1e293b;
+  scrollbar-color: #ec4899 #0f1012;
 }
 
 /* WebKit browsers (Chrome, Safari, Edge) */
@@ -41,7 +41,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b; /* slate-800 */
+  background: #26231d; /* slate-800 */
   border-radius: 4px;
 }
 
@@ -56,7 +56,7 @@
 }
 
 ::-webkit-scrollbar-corner {
-  background: #0f172a; /* slate-900 */
+  background: #3b382c; /* slate-900 */
 }
 
 /* For Firefox - same colors */

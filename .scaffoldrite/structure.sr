@@ -97,7 +97,22 @@ folder src {
   }
   folder library {
     folder commands {
+      file create.ts
+      file delete.ts
+      file deps.ts
       file doctor.ts
+      file find.ts
+      file generate.ts
+      file history.ts
+      file init.ts
+      file list.ts
+      file lock.ts
+      file merge.ts
+      file rename.ts
+      file unlock.ts
+      file update.ts
+      file validate.ts
+      file version.ts
     }
     folder core {
       file ci.ts
@@ -134,4 +149,5 @@ file .gitignore
 file jest.config.mjs
 file package.json
 file readme.md
+file sab.js
 file tsconfig.json

@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useState, useRef, useEffect } from "react";
-// import { useGraph } from "./hooks/useGraph";
+import { useGraph } from "./hooks/useGraph";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { GraphView } from "./components/Graph";
@@ -12,9 +12,9 @@ type ViewMode = "graph" | "list";
 type DisplayMode = "full" | "filename";
 
 export default function App() {
-//   const { data, refetch, loading } = useGraph() || mockData ; // ✅ added loading
-const loading = false
-const data = mockData
+  const { data, refetch, loading } = useGraph() || mockData ; // ✅ added loading
+// const loading = false
+// const data = mockData
 
 // const refetch = () => {
     
@@ -47,7 +47,7 @@ const data = mockData
   // ✅ reload uses refetch (no page refresh)
   const handleReload = async () => {
     console.log("Reloading graph data...");
-    // await refetch();
+    await refetch();
      window.location.reload(); // simplest + reliable
   };
 
