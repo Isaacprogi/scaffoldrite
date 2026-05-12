@@ -1,6 +1,4 @@
-// src/App.tsx
 import { useState, useRef, useEffect } from "react";
-import { useGraph } from "./hooks/useGraph";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { GraphView } from "./components/Graph";
@@ -8,64 +6,68 @@ import { ListView } from "./components/ListView";
 import {mockData} from '../data'
 import { useApp } from "./hooks/useApp";
 
-
-
 export default function App() {
-  const { data, refetch, loading } = useGraph() || mockData ;
-  const { displayMode,viewMode,dependencyMode,setDependencyMode } = useApp();
-// const loading = false
-// const data = mockData
+  // const { data, refetch, loading } = useGraph() || mockData;
+  const { displayMode, viewMode, dependencyMode, setDependencyMode } = useApp();
+  const [isMobile, setIsMobile] = useState(false);
 
-// const refetch = () => {
+
+  const loading = false
+const data = mockData
+
+const refetch = () => {
     
-// }
+}
 
 
+  // Check if mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Calculate counts
-const totalNodes = Object.keys(data.graph || {}).length;
-const circularCount = data.circular?.length || 0;
-const standaloneCount = data.standalone?.length || 0;
-const depsCount = totalNodes - standaloneCount;  
-
-
+  const totalNodes = Object.keys(data?.graph || {}).length;
+  const circularCount = data?.circular?.length || 0;
+  const standaloneCount = data?.standalone?.length || 0;
+  const depsCount = totalNodes - standaloneCount;
 
   const cyRef = useRef<any>(null);
 
   const handleExport = () => {
     if (cyRef.current) {
       console.log("Exporting graph as PNG...");
-
       const pngData = cyRef.current.png({
         output: 'blob',
         scale: 2
       });
-
       const link = document.createElement('a');
       link.download = `dependency-graph-${new Date().toISOString()}.png`;
       link.href = URL.createObjectURL(pngData);
       link.click();
-
       URL.revokeObjectURL(link.href);
     }
   };
 
-  // ✅ reload uses refetch (no page refresh)
   const handleReload = async () => {
     console.log("Reloading graph data...");
     await refetch();
-     window.location.reload(); // simplest + reliable
+    window.location.reload();
   };
 
-  useEffect(()=>{
-   console.log("Loading state changed:", loading);
-  },[loading])
+  useEffect(() => {
+    console.log("Loading state changed:", loading);
+  }, [loading]);
 
-  // ✅ INITIAL LOADING STATE
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-        <div className="text-center">
+        <div className="text-center px-4">
           <div className="text-4xl mb-4 animate-pulse">📊</div>
           <p>Loading graph data...</p>
           <p className="text-xs text-slate-500 mt-2">
@@ -76,13 +78,11 @@ const depsCount = totalNodes - standaloneCount;
     );
   }
 
-  // optional safety fallback
   if (!data) return null;
 
   return (
     <div className="flex flex-col font-outfit h-screen">
       <div className="flex flex-1 overflow-hidden">
-
         <Sidebar 
           mode={dependencyMode} 
           setMode={(mode) => setDependencyMode(mode)}
@@ -90,22 +90,22 @@ const depsCount = totalNodes - standaloneCount;
           standaloneCount={standaloneCount}
           totalNodes={totalNodes}
           depsCount={depsCount}
+          onExport={handleExport}
+          onReload={handleReload}
         />
 
         <div className="flex-1 overflow-hidden">
-
-         <Header
-        onExport={handleExport}
-        onReload={handleReload}
-      />
+          <Header/>
 
           {viewMode === "graph" ? (
-            <GraphView 
-              cyRef={cyRef} 
-              data={data} 
-              displayMode={displayMode} 
-              mode={dependencyMode} 
-            />
+            <div className={isMobile ? "touch-manipulation" : ""}>
+              <GraphView 
+                cyRef={cyRef} 
+                data={data} 
+                displayMode={displayMode} 
+                mode={dependencyMode} 
+              />
+            </div>
           ) : (
             <ListView 
               data={data} 
@@ -113,7 +113,6 @@ const depsCount = totalNodes - standaloneCount;
               displayMode={displayMode}
             />
           )}
-
         </div>
       </div>
     </div>

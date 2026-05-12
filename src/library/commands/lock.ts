@@ -13,7 +13,6 @@ interface Props {
     prePush:boolean;
 }
 
-   
 export const  lock =  async ({againstValue,onlyAgainst,prePush,hasAgainst}:Props) => {
 
         if (hasFlag("--git")) {

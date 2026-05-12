@@ -1,4 +1,3 @@
-// src/components/ListView.tsx
 import { useState } from "react";
 import {
   BarChart3,
@@ -193,7 +192,7 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-auto pb-[4rem] bg-[#1e1e1e]">
+    <div className="h-[calc(100vh-4rem)] overflow-auto bg-[#1e1e1e]">
       <div className="p-6">
         {/* Stats - Notion/n8n style dashboard cards */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -391,99 +390,100 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
         ) : (
           /* Normal list view for "all", "deps", and "standalone" modes */
           <div className="space-y-2">
-            {filteredFiles.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-sm">
-                No files found matching your search
-              </div>
-            ) : (
-              filteredFiles.map((file) => {
-                const deps = graph[file] || [];
-                const type = getFileType(file);
-                const TypeIcon = type.icon;
-                const styles = colorStyles[type.color];
-                const displayName = getDisplayName(file);
-                const directoryPath = getDirectoryPath(file);
-                const isRoot = directoryPath === "root";
+  {filteredFiles.length === 0 ? (
+    <div className="text-center py-12 text-slate-500 text-sm">
+      No files found matching your search
+    </div>
+  ) : (
+    filteredFiles.map((file) => {
+      const deps = graph[file] || [];
+      const type = getFileType(file);
+      const TypeIcon = type.icon;
+      const styles = colorStyles[type.color];
+      const displayName = getDisplayName(file);
+      const directoryPath = getDirectoryPath(file);
+      const isRoot = directoryPath === "root";
 
-                return (
-                  <div
-                    key={file}
-                    className="bg-[#2d2d2d] border border-[#3d3d3d] rounded-lg hover:border-[#4d4d4d] hover:shadow-md transition-all"
-                  >
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2 flex-1">
-                          <div className={`p-1 rounded ${styles.bg}`}>
-                            <TypeIcon size={16} className={styles.icon} />
-                          </div>
+      return (
+        <div
+          key={file}
+          className="bg-[#2d2d2d] border border-[#3d3d3d] rounded-lg hover:border-[#4d4d4d] hover:shadow-md transition-all"
+        >
+          <div className="p-4">
+            <div className="flex flex-wrap gap-2 items-start justify-between mb-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className={`p-1 rounded flex-shrink-0 ${styles.bg}`}>
+                  <TypeIcon size={16} className={styles.icon} />
+                </div>
 
-                          <div className="flex-1">
-                            <div className="font-mono text-[13px] text-slate-200 font-medium">
-                              {displayName}
-                            </div>
-                            {!isRoot && (
-                              <div className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
-                                <FolderOpen size={10} />
-                                <span title={file}>
-                                  {displayMode === "filename" ? directoryPath : directoryPath}
-                                </span>
-                              </div>
-                            )}
-                            {displayMode === "full" && isRoot && (
-                              <div className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
-                                <FolderOpen size={10} />
-                                root
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <span className={`${styles.badge} px-2 py-0.5 rounded-full text-[10px] font-medium`}>
-                          {type.label}
-                        </span>
-                      </div>
-
-                      <div className="mt-3">
-                        <div className="text-[10px] text-slate-500 mb-2 flex items-center gap-1">
-                          <GitBranch size={10} />
-                          Dependencies ({deps.length}):
-                        </div>
-
-                        {deps.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {deps.map((dep) => (
-                              <span
-                                key={dep}
-                                className="text-[11px] px-2 py-1 bg-[#1e1e1e] rounded-md text-slate-300 font-mono flex items-center gap-1 border border-[#3d3d3d]"
-                                title={displayMode === "filename" ? dep : undefined}
-                              >
-                                <ChevronRight size={10} className="text-slate-600" />
-                                {displayMode === "filename" 
-                                  ? (dep.split(/[/\\]/).pop() || dep)
-                                  : dep
-                                }
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-[11px] text-slate-500 italic">
-                            No dependencies
-                          </div>
-                        )}
-                      </div>
-
-                      {isNodeInCircular(file) && (
-                        <div className="mt-2 text-[11px] text-pink-400 flex items-center gap-1 bg-pink-500/5 px-2 py-1 rounded border border-pink-500/10">
-                          <AlertCircle size={11} />
-                          Part of circular dependency chain
-                        </div>
-                      )}
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-[13px] text-slate-200 font-medium break-words">
+                    {displayName}
                   </div>
-                );
-              })
+                  {!isRoot && (
+                    <div className="text-[10px] text-slate-500 mt-1 flex items-start gap-1">
+                      <FolderOpen size={10} className="flex-shrink-0 mt-0.5" />
+                      <span className="break-words">
+                        {displayMode === "filename" ? directoryPath : directoryPath}
+                      </span>
+                    </div>
+                  )}
+                  {displayMode === "full" && isRoot && (
+                    <div className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                      <FolderOpen size={10} className="flex-shrink-0" />
+                      <span>root</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <span className={`${styles.badge} px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0`}>
+                {type.label}
+              </span>
+            </div>
+
+            <div className="mt-3">
+              <div className="text-[10px] text-slate-500 mb-2 flex items-center gap-1">
+                <GitBranch size={10} />
+                Dependencies ({deps.length}):
+              </div>
+
+              {deps.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {deps.map((dep) => (
+                    <span
+                      key={dep}
+                      className="text-[11px] px-2 py-1 bg-[#1e1e1e] rounded-md text-slate-300 font-mono flex items-center gap-1 border border-[#3d3d3d]"
+                    >
+                      <ChevronRight size={10} className="text-slate-600 flex-shrink-0" />
+                      <span className="break-words">
+                        {displayMode === "filename" 
+                          ? (dep.split(/[/\\]/).pop() || dep)
+                          : dep
+                        }
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-500 italic">
+                  No dependencies
+                </div>
+              )}
+            </div>
+
+            {isNodeInCircular(file) && (
+              <div className="mt-2 text-[11px] text-pink-400 flex items-start gap-1 bg-pink-500/5 px-2 py-1 rounded border border-pink-500/10">
+                <AlertCircle size={11} className="flex-shrink-0 mt-0.5" />
+                <span className="break-words">Part of circular dependency chain</span>
+              </div>
             )}
           </div>
+        </div>
+      );
+    })
+  )}
+</div>
         )}
       </div>
     </div>

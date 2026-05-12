@@ -1,4 +1,3 @@
-// src/components/SettingsModal.tsx
 import { Eye, FileDown, HelpCircle } from 'lucide-react';
 
 type DisplayMode = "full" | "filename";

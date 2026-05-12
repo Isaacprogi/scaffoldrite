@@ -8,7 +8,6 @@ constraints {
 }
 `;
 
-
 export const DEFAULT_IGNORE_TEMPLATE: string = `node_modules
 .git
 .next
@@ -17,7 +16,6 @@ build
 coverage
 .turbo
 `;
-
 
 export const theme = {
   primary: chalk.hex('#00b4d8'),     // Bright cyan-blue
@@ -34,7 +32,7 @@ export const theme = {
   border: chalk.hex('#4cc9f0'),       // Border color
 };
 
-// Status icons with colors
+
 export const icons = {
   success: theme.success('✓'),
   error: theme.error('✗'),
@@ -47,6 +45,6 @@ export const icons = {
   cross: theme.error('❌'),
   star: theme.accent('⭐'),
   fire: theme.warning('🔥'),
-  lock: theme.accent('🔒'),   // added lock icon
-  unlock: theme.success('🔓'), // added unlock icon
+  lock: theme.accent('🔒'), 
+  unlock: theme.success('🔓'), 
 };

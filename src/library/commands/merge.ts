@@ -1,4 +1,3 @@
-
 import { preventIfStructureLocked } from "../core/lock";
 import { baseDir, loadAST, saveStructure } from "../../lib/utils";
 import { theme } from "../../data";

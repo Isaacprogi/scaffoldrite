@@ -11,7 +11,6 @@ interface Props {
     prePush: boolean;
 }
 
-
 export const unlock = async ({ prePush }: Props) => {
 
     if (hasFlag("--git")) {

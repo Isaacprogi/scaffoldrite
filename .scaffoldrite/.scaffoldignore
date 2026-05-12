@@ -7,5 +7,6 @@ coverage
 .turbo
 .env
 src/frontend/node_modules
+docs/package-lock.json
 src/frontend/package-lock.json
 package-lock.json

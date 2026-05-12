@@ -1,4 +1,3 @@
-// src/components/Modal.tsx
 import { X } from 'lucide-react';
 
 type ModalProps = {

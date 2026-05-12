@@ -1,6 +1,5 @@
 folder .github {
   folder workflows {
-    file scaffoldrite.yml
   }
 }
 folder .husky {
@@ -25,6 +24,104 @@ folder .husky {
   }
   file pre-commit
 }
+folder docs {
+  folder .github {
+    folder workflows {
+      file docs.yml
+    }
+  }
+  folder .source {
+    file browser.ts
+    file dynamic.ts
+    file server.ts
+    file source.config.mjs
+  }
+  folder app {
+    folder api {
+      folder search {
+        file route.ts
+      }
+    }
+    folder docs {
+      folder [[...slug]] {
+        file page.tsx
+      }
+      file layout.tsx
+    }
+    file favicon.ico
+    file globals.css
+    file layout.tsx
+    file page.tsx
+  }
+  folder components {
+    file mdx.tsx
+  }
+  folder content {
+    folder docs {
+      folder commands {
+        folder commands {
+          file create.md
+          file delete.md
+          file find.md
+          file generate.md
+          file init.md
+          file list.md
+          file merge.md
+          file rename.md
+          file update.md
+          file validate.md
+        }
+        file command-reference.md
+        file flags-reference.md
+        file index.md
+        file positional-arguments.md
+      }
+      folder release {
+        file v3.md
+      }
+      file advanced-scenarios.md
+      file community-license.md
+      file constraints.md
+      file daily-workflows.md
+      file faqs.md
+      file filesystem-content-handling.md
+      file getting-started.md
+      file ignoring-files.md
+      file index.md
+      file project-configuration.md
+      file real-world-workflows.md
+      file structure-language.md
+    }
+  }
+  folder docs {
+    folder [[...slug]] {
+      file page.tsx
+    }
+    file layout.tsx
+  }
+  folder lib {
+    file layout.shared.ts
+    file source.ts
+  }
+  folder public {
+    file file.svg
+    file globe.svg
+    file next.svg
+    file vercel.svg
+    file window.svg
+  }
+  file .gitignore
+  file AGENTS.md
+  file CLAUDE.md
+  file eslint.config.mjs
+  file next-env.d.ts
+  file next.config.mjs
+  file package.json
+  file postcss.config.mjs
+  file README.md
+  file source.config.ts
+  file tsconfig.json
+}
 folder public {
   file scaffoldrite-banner.png
   file structure.png
@@ -34,6 +131,9 @@ folder src {
     file index.ts
   }
   folder front {
+    folder .scaffoldrite {
+      file settings.json
+    }
     folder data {
       file index.ts
     }
@@ -43,9 +143,6 @@ folder src {
     }
     folder src {
       folder assets {
-        file logo_large.png
-        file logo_transparent.png
-        file logo-2.png
         file logo.png
       }
       folder components {
@@ -63,7 +160,6 @@ folder src {
         file useApp.tsx
         file useGraph.ts
       }
-      file App.css
       file App.tsx
       file index.css
       file main.tsx
