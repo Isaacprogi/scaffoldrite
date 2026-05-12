@@ -1,6 +1,7 @@
 folder .github {
   folder workflows {
   }
+  file docs.yml
 }
 folder .husky {
   folder _ {
@@ -25,11 +26,6 @@ folder .husky {
   file pre-commit
 }
 folder docs {
-  folder .github {
-    folder workflows {
-      file docs.yml
-    }
-  }
   folder .source {
     file browser.ts
     file dynamic.ts
