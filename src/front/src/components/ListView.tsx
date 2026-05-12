@@ -23,11 +23,11 @@ type ServerData = {
 
 type Props = {
   data: ServerData;
-  mode: "all" | "circular" | "standalone";
+  mode: "all" | "deps" | "circular" | "standalone";
   displayMode?: "full" | "filename";
 };
 
-type ColorKey = "amber" | "pink" | "gray";
+type ColorKey = "amber" | "pink" | "gray" | "blue";
 
 const colorStyles: Record<
   ColorKey,
@@ -60,6 +60,13 @@ const colorStyles: Record<
     border: "border-slate-700",
     bg: "bg-slate-800/30",
   },
+  blue: {
+    icon: "text-blue-400",
+    badge: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+    text: "text-blue-300",
+    border: "border-blue-500/20",
+    bg: "bg-blue-500/5",
+  },
 };
 
 export function ListView({ data, mode, displayMode = "full" }: Props) {
@@ -90,6 +97,14 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
     return standalone.includes(fullPath);
   };
 
+  const hasDependencies = (fullPath: string): boolean => {
+    // Check if node has any outgoing dependencies
+    const hasOutgoing = graph[fullPath] && graph[fullPath].length > 0;
+    // Check if node has any incoming dependencies
+    const hasIncoming = Object.values(graph).some(deps => deps.includes(fullPath));
+    return hasOutgoing || hasIncoming;
+  };
+
   const getFilteredFiles = (): string[] => {
     // For circular mode, we don't return individual files
     if (mode === "circular") {
@@ -100,6 +115,8 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
 
     if (mode === "standalone") {
       files = files.filter((file) => standalone.includes(file));
+    } else if (mode === "deps") {
+      files = files.filter((file) => hasDependencies(file));
     }
 
     if (searchTerm) {
@@ -134,9 +151,7 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
     total: Object.keys(graph).length,
     circular: circular.length,
     standalone: standalone.length,
-    withDeps: Object.keys(graph).filter(
-      (f) => graph[f]?.length > 0
-    ).length,
+    withDeps: Object.keys(graph).filter((f) => hasDependencies(f)).length,
   };
 
   const getFileType = (file: string) => {
@@ -151,6 +166,12 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
         label: "Circular",
         color: "pink" as ColorKey,
         icon: RefreshCw,
+      };
+    if (hasDependencies(file))
+      return {
+        label: "Has Dependencies",
+        color: "blue" as ColorKey,
+        icon: Link,
       };
     return {
       label: "Normal",
@@ -368,7 +389,7 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
             )}
           </div>
         ) : (
-          /* Normal list view for "all" and "standalone" modes */
+          /* Normal list view for "all", "deps", and "standalone" modes */
           <div className="space-y-2">
             {filteredFiles.length === 0 ? (
               <div className="text-center py-12 text-slate-500 text-sm">
@@ -452,11 +473,11 @@ export function ListView({ data, mode, displayMode = "full" }: Props) {
                       </div>
 
                       {isNodeInCircular(file) && (
-  <div className="mt-2 text-[11px] text-pink-400 flex items-center gap-1 bg-pink-500/5 px-2 py-1 rounded border border-pink-500/10">
-    <AlertCircle size={11} />
-    Part of circular dependency chain
-  </div>
-)}
+                        <div className="mt-2 text-[11px] text-pink-400 flex items-center gap-1 bg-pink-500/5 px-2 py-1 rounded border border-pink-500/10">
+                          <AlertCircle size={11} />
+                          Part of circular dependency chain
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -93,15 +93,7 @@ export function Header({ onExport, onReload }: Props) {
           {/* Left side */}
           <div className='flex items-center gap-2'>
             {/* Settings Button */}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="px-3 py-1.5 bg-[#2d2d2d] rounded-md text-[13px] font-medium transition-all
-                       flex items-center gap-2 text-[#e4e4e4] hover:bg-[#3d3d3d] border border-transparent hover:border-[#4d4d4d]"
-              title="Settings (⌘D)"
-            >
-              <Settings size={14} className="text-[#808080]" />
-              <span className="hidden sm:inline">Settings</span>
-            </button>
+            
 
             {/* Action Buttons */}
             <div className="flex items-center gap-1 ml-1">
@@ -190,7 +182,17 @@ export function Header({ onExport, onReload }: Props) {
                   <span className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-white/20 to-pink-500/0 animate-shimmer" />
                 )}
               </button>
+
             </div>
+              <button
+              onClick={() => setShowSettings(true)}
+              className="px-3 py-1.5 bg-[#2d2d2d] rounded-md text-[13px] font-medium transition-all
+                       flex items-center gap-2 text-[#e4e4e4] hover:bg-[#3d3d3d] border border-transparent hover:border-[#4d4d4d]"
+              title="Settings (⌘D)"
+            >
+              <Settings size={14} className="text-[#808080]" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
           </div>
         </div>
       </header>

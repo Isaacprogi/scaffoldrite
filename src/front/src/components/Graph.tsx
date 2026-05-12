@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
+import { useApp } from "../hooks/useApp";
 
 type ServerData = {
   graph: Record<string, string[]>;
@@ -9,7 +10,7 @@ type ServerData = {
 
 type Props = {
   data: ServerData;
-  mode: "all" | "circular" | "standalone";
+  mode: "all" | "deps" | "circular" | "standalone";
   displayMode?: "full" | "filename";
   cyRef: React.RefObject<any>;
 };
@@ -24,6 +25,7 @@ export function GraphView({
   const { graph, circular, standalone } = data;
   const previousMode = useRef<string>(mode);
   const savedPositions = useRef<Record<string, { x: number; y: number }>>({});
+  const { enableTooltips } = useApp();
 
   // -----------------------------
   // HELPERS
@@ -33,6 +35,13 @@ export function GraphView({
 
   const isNodeStandalone = (fullPath: string): boolean =>
     standalone.includes(fullPath);
+
+  const hasDependencies = (fullPath: string): boolean => {
+    // Check if node has any incoming or outgoing dependencies
+    const hasOutgoing = graph[fullPath] && graph[fullPath].length > 0;
+    const hasIncoming = Object.values(graph).some(deps => deps.includes(fullPath));
+    return hasOutgoing || hasIncoming;
+  };
 
   const getDisplayName = (fullPath: string): string =>
     displayMode === "filename"
@@ -50,7 +59,7 @@ export function GraphView({
     const edges: any[] = [];
     const seen = new Set<string>();
 
-    // Helper function to get node color based on type
+    // Helper function to get node color based on type (original colors)
     const getNodeColors = (fullPath: string) => {
       const inCirc = isNodeInCircular(fullPath);
       const isStand = isNodeStandalone(fullPath);
@@ -59,8 +68,8 @@ export function GraphView({
         backgroundColor: inCirc
           ? "#dc2626" // red for circular
           : isStand
-          ? "#f59e0b" // orange for standalone
-          : "#e94560", // pink/purple for regular
+          ? "#f59e0b" // orange/amber for standalone
+          : "#e94560", // pink for regular (including deps)
         borderColor: inCirc
           ? "#7f1d1d" // deep red border
           : isStand
@@ -83,6 +92,7 @@ export function GraphView({
             fullPath: file,
             inCircular: isNodeInCircular(file),
             isStandalone: isNodeStandalone(file),
+            hasDependencies: hasDependencies(file),
             backgroundColor: colors.backgroundColor,
             borderColor: colors.borderColor,
           },
@@ -103,6 +113,7 @@ export function GraphView({
               fullPath: dep,
               inCircular: isNodeInCircular(dep),
               isStandalone: isNodeStandalone(dep),
+              hasDependencies: hasDependencies(dep),
               backgroundColor: colors.backgroundColor,
               borderColor: colors.borderColor,
             },
@@ -279,10 +290,17 @@ export function GraphView({
       cy.nodes().forEach((node: any) => {
         const inCirc = node.data("inCircular");
         const isStand = node.data("isStandalone");
+        const hasDeps = node.data("hasDependencies");
 
         let visible = true;
-        if (currentMode === "circular") visible = inCirc;
-        else if (currentMode === "standalone") visible = isStand;
+        if (currentMode === "circular") {
+          visible = inCirc;
+        } else if (currentMode === "standalone") {
+          visible = isStand;
+        } else if (currentMode === "deps") {
+          visible = hasDeps; // Show only nodes with dependencies
+        }
+        // "all" mode shows everything (visible = true)
 
         node.style({
           display: visible ? "element" : "none",
@@ -335,21 +353,27 @@ export function GraphView({
     const cy = cyRef.current;
 
     const handleMouseOver = (e: any) => {
+      // Only show tooltip if enabled
+      if (!enableTooltips) return;
+      
       const node = e.target;
       const inCirc = node.data("inCircular");
       const isStand = node.data("isStandalone");
+      const hasDeps = node.data("hasDependencies");
 
       const tooltip = document.createElement("div");
       tooltip.id = "cy-tooltip";
 
-      // Determine node type and indicator
+      // Determine node type and indicator (original colors)
       let typeIndicator = "";
       if (inCirc) {
         typeIndicator = '<div style="color:#ef4444; margin-top:4px;">🔄 Circular Dependency</div>';
       } else if (isStand) {
         typeIndicator = '<div style="color:#f59e0b; margin-top:4px;">📄 Standalone File</div>';
+      } else if (hasDeps) {
+        typeIndicator = '<div style="color:#e94560; margin-top:4px;">🔗 Has Dependencies</div>';
       } else {
-        typeIndicator = '<div style="color:#e94560; margin-top:4px;">🔗 Regular Dependency</div>';
+        typeIndicator = '<div style="color:#e94560; margin-top:4px;">📄 Regular File</div>';
       }
 
       tooltip.innerHTML = `
@@ -386,7 +410,7 @@ export function GraphView({
     return () => {
       cy.off("mouseover", "node", handleMouseOver);
     };
-  }, [graph]);
+  }, [graph, enableTooltips]);
 
   return (
     <div

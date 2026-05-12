@@ -51,25 +51,22 @@ folder src {
       folder components {
         file Graph.tsx
         file Header.tsx
-        file List.tsx
         file ListView.tsx
+        file Modal.tsx
+        file SettingsModal.tsx
         file Sidebar.tsx
       }
+      folder context {
+        file AppContext.tsx
+      }
       folder hooks {
-        file ban.ts
-        file banga.ts
-        file mana.ts
-        file saba.ts
+        file useApp.tsx
         file useGraph.ts
-        file vaga.ts
-        file vanta.ts
-        file venue.ts
       }
       file App.css
       file App.tsx
       file index.css
       file main.tsx
-      file val.tsx
     }
     folder types {
       file index.ts
@@ -149,5 +146,4 @@ file .gitignore
 file jest.config.mjs
 file package.json
 file readme.md
-file sab.js
 file tsconfig.json

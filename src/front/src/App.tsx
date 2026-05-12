@@ -8,11 +8,11 @@ import { ListView } from "./components/ListView";
 import {mockData} from '../data'
 import { useApp } from "./hooks/useApp";
 
-type DependencyMode = "all" | "circular" | "standalone";
+
 
 export default function App() {
   const { data, refetch, loading } = useGraph() || mockData ;
-  const { displayMode,viewMode } = useApp();
+  const { displayMode,viewMode,dependencyMode,setDependencyMode } = useApp();
 // const loading = false
 // const data = mockData
 
@@ -20,7 +20,13 @@ export default function App() {
     
 // }
 
-  const [dependencyMode, setDependencyMode] = useState<DependencyMode>("all");
+
+
+  // Calculate counts
+const totalNodes = Object.keys(data.graph || {}).length;
+const circularCount = data.circular?.length || 0;
+const standaloneCount = data.standalone?.length || 0;
+const depsCount = totalNodes - standaloneCount;  
 
 
 
@@ -79,10 +85,11 @@ export default function App() {
 
         <Sidebar 
           mode={dependencyMode} 
-          setMode={setDependencyMode}
-          circularCount={data.circular?.length || 0}
-          standaloneCount={data.standalone?.length || 0}
-          totalNodes={Object.keys(data.graph || {}).length}
+          setMode={(mode) => setDependencyMode(mode)}
+          circularCount={circularCount}
+          standaloneCount={standaloneCount}
+          totalNodes={totalNodes}
+          depsCount={depsCount}
         />
 
         <div className="flex-1 overflow-hidden">
