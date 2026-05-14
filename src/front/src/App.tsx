@@ -3,35 +3,27 @@ import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { GraphView } from "./components/Graph";
 import { ListView } from "./components/ListView";
-import {mockData} from '../data'
+import { mockData } from "../data";
 import { useApp } from "./hooks/useApp";
+import { useGraph } from "./hooks/useGraph";
 
 export default function App() {
-  // const { data, refetch, loading } = useGraph() || mockData;
+  const { data, refetch, loading } = useGraph() || mockData;
   const { displayMode, viewMode, dependencyMode, setDependencyMode } = useApp();
   const [isMobile, setIsMobile] = useState(false);
 
 
-  const loading = false
-const data = mockData
-
-const refetch = () => {
-    
-}
-
-
-  // Check if mobile view
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Calculate counts
+
   const totalNodes = Object.keys(data?.graph || {}).length;
   const circularCount = data?.circular?.length || 0;
   const standaloneCount = data?.standalone?.length || 0;
@@ -43,10 +35,10 @@ const refetch = () => {
     if (cyRef.current) {
       console.log("Exporting graph as PNG...");
       const pngData = cyRef.current.png({
-        output: 'blob',
-        scale: 2
+        output: "blob",
+        scale: 2,
       });
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.download = `dependency-graph-${new Date().toISOString()}.png`;
       link.href = URL.createObjectURL(pngData);
       link.click();
@@ -63,6 +55,7 @@ const refetch = () => {
   useEffect(() => {
     console.log("Loading state changed:", loading);
   }, [loading]);
+  
 
   if (loading && !data) {
     return (
@@ -83,8 +76,8 @@ const refetch = () => {
   return (
     <div className="flex flex-col font-outfit h-screen">
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar 
-          mode={dependencyMode} 
+        <Sidebar
+          mode={dependencyMode}
           setMode={(mode) => setDependencyMode(mode)}
           circularCount={circularCount}
           standaloneCount={standaloneCount}
@@ -95,20 +88,20 @@ const refetch = () => {
         />
 
         <div className="flex-1 overflow-hidden">
-          <Header/>
+          <Header />
 
           {viewMode === "graph" ? (
             <div className={isMobile ? "touch-manipulation" : ""}>
-              <GraphView 
-                cyRef={cyRef} 
-                data={data} 
-                displayMode={displayMode} 
-                mode={dependencyMode} 
+              <GraphView
+                cyRef={cyRef}
+                data={data}
+                displayMode={displayMode}
+                mode={dependencyMode}
               />
             </div>
           ) : (
-            <ListView 
-              data={data} 
+            <ListView
+              data={data}
               mode={dependencyMode}
               displayMode={displayMode}
             />

@@ -1,10 +1,10 @@
 import { hasFlag } from "../../lib/utils";
-import { installGitLock } from "../core/gitHooks";
-import { installStructureLock } from "../core/lock";
-import { enableCI } from "../core/lock";
+import { installGitLock } from "../../lib/utils/gitHooks";
+import { installStructureLock } from "../../lib/utils/lock";
+import { enableCI } from "../../lib/utils/lock";
 import { baseDir } from "../../lib/utils";
 import { icons, theme } from "../../data";
-import { applyConfigSettings } from "../core/lock";
+import { applyConfigSettings } from "../../lib/utils/lock";
 
 interface Props {
     againstValue:string;

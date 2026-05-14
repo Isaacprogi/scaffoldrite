@@ -1,12 +1,12 @@
 node_modules
-.git
 .next
+.git
 dist
 build
 coverage
 .turbo
 .env
-src/frontend/node_modules
-docs/package-lock.json
-src/frontend/package-lock.json
+src/front/node_modules
+docs/out
+src/front/package-lock.json
 package-lock.json

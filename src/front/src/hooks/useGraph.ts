@@ -9,11 +9,11 @@ type GraphData = {
 export function useGraph() {
   const [data, setData] = useState<GraphData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true); // ✅ added
+  const [loading, setLoading] = useState<boolean>(true); 
 
   const fetchGraph = useCallback(async () => {
     try {
-      setLoading(true); // ✅ start loading
+      setLoading(true); 
 
       const res = await fetch("http://localhost:3210/graph");
 
@@ -29,13 +29,13 @@ export function useGraph() {
       console.error("Failed to fetch graph:", err);
       setError(err.message);
     } finally {
-      setLoading(false); // ✅ always stop loading
+      setLoading(false); 
     }
   }, []);
 
   const refetchGraph = useCallback(async () => {
     try {
-      setLoading(true); // ✅ start loading
+      setLoading(true); 
 
       const res = await fetch("http://localhost:3210/reload");
 
@@ -51,7 +51,7 @@ export function useGraph() {
       console.error("Failed to fetch graph:", err);
       setError(err.message);
     } finally {
-      setLoading(false); // ✅ always stop loading
+      setLoading(false);
     }
   }, []);
 
@@ -62,7 +62,7 @@ export function useGraph() {
   return {
     data,
     error,
-    loading,   // ✅ NEW
+    loading, 
     refetch: refetchGraph
   };
 }

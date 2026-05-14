@@ -1,3 +1,4 @@
+import * as minimatch from 'minimatch';
 import fs from "fs/promises";
 import path from "path";
 import { execSync } from "child_process";
@@ -45,10 +46,22 @@ export async function generateFS(
     return rel === ".scaffoldrite" || rel.startsWith(".scaffoldrite" + path.sep);
   };
 
-  const isIgnored = (p: string) => {
-    const name = path.basename(p);
-    return ignoreList.includes(name);
-  };
+
+const isIgnored = (p: string) => {
+  const relativePath = path.relative(root, p);
+  
+  return ignoreList.some(pattern => {
+    // For patterns with slashes, match against relative path
+    if (pattern.includes('/') || pattern.includes('\\')) {
+      const normalizedPattern = pattern.replace(/[\\/]/g, '/');
+      const normalizedPath = relativePath.replace(/[\\/]/g, '/');
+      return minimatch.minimatch(normalizedPath, normalizedPattern);
+    }
+    
+    // For simple names, match against basename
+    return path.basename(p) === pattern;
+  });
+};
 
   const isIgnoredOrInternal = (p: string) => isIgnored(p) || isScaffoldriteInternal(p);
 

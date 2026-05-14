@@ -10,10 +10,10 @@ import { createRelativeLink } from 'fumadocs-ui/mdx';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params;
-  const page = source.getPage(params.slug) as any;   // ← important
+  const page = source.getPage(params.slug) as any;
   if (!page) notFound();
 
-  const MDX = page.data.body;   // this should now work
+  const MDX = page.data.body;
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
@@ -36,7 +36,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
   const params = await props.params;
-  const page = source.getPage(params.slug) as any;   // ← add this
+  const page = source.getPage(params.slug) as any;
   if (!page) notFound();
 
   return {

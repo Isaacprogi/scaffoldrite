@@ -1,4 +1,4 @@
-import { preventIfStructureLocked } from "../core/lock";
+import { preventIfStructureLocked } from "../../lib/utils/lock";
 import { baseDir, loadAST, saveStructure } from "../../lib/utils";
 import { theme } from "../../data";
 import { icons } from "../../data";

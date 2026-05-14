@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { commandHandlers } from "../src/library/commandHandler";
+import { commandHandlers } from "../src/library/commandHandlerdler";
 import * as utils from "../src/utils/index";
-import { buildASTFromFS } from "../src/library/fsToAst";
-import { validateConstraints } from "../src/library/validator";
-import { generateFS } from "../src/library/generator";
+import { buildASTFromFS } fr../src/library/fsToAst/fsToAst";
+import { validateConstraints ../src/library/validatorry/validator";
+import { generat../src/library/generatoribrary/generator";
 import { saveStructure } from "../src/utils/index";
-import { validateFS } from "../src/library/validateFS";
+import { val../src/library/validateFSc/library/validateFS";
 
 
 jest.mock("fs");

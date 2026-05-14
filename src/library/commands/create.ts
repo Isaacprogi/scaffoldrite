@@ -1,4 +1,4 @@
-import { preventIfStructureLocked } from "../core/lock";
+import { preventIfStructureLocked } from "../../lib/utils/lock";
 import { validateConstraints } from "../validator";
 import { baseDir, loadAST, saveStructure } from "../../lib/utils";
 import { theme } from "../../data";
@@ -32,9 +32,7 @@ export const create = async ({ arg3, arg4, force, ifNotExists, dryRun, verbose, 
 
     validateConstraints(structure.root, structure.constraints);
 
-    const fullPath = path.join(outputDir, arg3);
 
-    // Add node to structure (NOW returns a result)
     const result = addNode(
         structure.root,
         arg3,
@@ -52,7 +50,7 @@ export const create = async ({ arg3, arg4, force, ifNotExists, dryRun, verbose, 
         return;
     }
 
-    // Save structure update (Guard with dryRun)
+
     if (!dryRun) {
         saveStructure(
             structure.root,
@@ -101,7 +99,7 @@ export const create = async ({ arg3, arg4, force, ifNotExists, dryRun, verbose, 
 
     process.stdout.write("\n");
 
-    // ✅ CLEAN RESULT-BASED STATUS OUTPUT
+
     if (dryRun) {
         console.log(theme.info("[Dry Run] Creation simulated."));
     } else {

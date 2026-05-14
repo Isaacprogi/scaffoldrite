@@ -1,5 +1,4 @@
- 
-import { preventIfStructureLocked } from "../core/lock";
+import { preventIfStructureLocked } from "../../lib/utils/lock";
 import { validateConstraints } from "../validator";
 import { baseDir, loadAST} from "../../lib/utils";
 import { theme } from "../../data";
@@ -34,11 +33,9 @@ interface Props {
 
         let structure;
         if (hasAgainst && !isLocalAst) {
-            // default behavior
             structure = loadASTFromRef(againstValue);
             console.log(theme.info(`${icons.info} Generating from AST of ${againstValue}`));
         } else {
-            // user wants their current structure.sr
             structure = loadAST();
             if (hasAgainst) {
                 console.log(theme.info(`${icons.info} Using local AST, referencing files from ${againstValue}`));
@@ -129,9 +126,13 @@ interface Props {
 
                     const structureSrc = path.join(process.cwd(), ".scaffoldrite", "structure.sr");
                     const ignoreSrc = path.join(process.cwd(), ".scaffoldrite", ".scaffoldignore");
+                    const projectSrc = path.join(process.cwd(), ".scaffoldrite", "project.json");
+                    const settingsSrc = path.join(process.cwd(), ".scaffoldrite", "settings.json");
 
                     if (fs.existsSync(structureSrc)) fs.copyFileSync(structureSrc, path.join(scaffoldDir, "structure.sr"));
                     if (fs.existsSync(ignoreSrc)) fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
+                    if (fs.existsSync(projectSrc)) fs.copyFileSync(projectSrc, path.join(scaffoldDir, "project.json"));
+                    if (fs.existsSync(settingsSrc)) fs.copyFileSync(settingsSrc, path.join(scaffoldDir, "settings.json"));
                 }
             }
         } else {

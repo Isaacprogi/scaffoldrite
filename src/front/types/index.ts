@@ -1,4 +1,3 @@
-// src/types/graph.ts
 export type GraphNode = {
   data: {
     id: string;

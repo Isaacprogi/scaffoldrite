@@ -1,4 +1,4 @@
-import { preventIfStructureLocked } from "../core/lock";
+import { preventIfStructureLocked } from "../../lib/utils/lock";
 import { validateConstraints } from "../validator";
 import { baseDir, loadAST, saveStructure } from "../../lib/utils";
 import { theme } from "../../data";
@@ -35,33 +35,26 @@ export const rename = async ({ arg3, arg4, dryRun, summary, verbose }: Props) =>
         exit(1);
     }
 
-    // 1️⃣ Validate constraints before doing anything
     validateConstraints(structure.root, structure.constraints);
 
-    // 2️⃣ Prepare paths
     const oldFullPath = path.join(outputDir, oldPath);
     const newFullPath = path.join(outputDir, path.join(path.dirname(oldPath), newName));
 
-    // 3️⃣ Update the in-memory AST
     renameNode(structure.root, oldPath, newName);
 
-    // Re-validate to ensure the new name doesn't break constraints (e.g., naming conventions)
     validateConstraints(structure.root, structure.constraints);
 
-    // 4️⃣ User Confirmation
     if (!(await confirmProceed(outputDir))) {
         console.log(theme.muted(`${icons.info} Rename cancelled.`));
         return;
     }
 
-    // 5️⃣ Handle structure.sr update (with Dry Run guard)
     if (!dryRun) {
         saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
     } else {
         console.log(theme.info(`${icons.info} [Dry Run] Would update ${STRUCTURE_PATH}`));
     }
 
-    // 6️⃣ Handle physical filesystem rename (with Dry Run guard)
     if (!dryRun) {
         const renamed = renameFSItem(oldFullPath, newFullPath);
         if (!renamed) {
@@ -71,19 +64,17 @@ export const rename = async ({ arg3, arg4, dryRun, summary, verbose }: Props) =>
         console.log(theme.info(`${icons.info} [Dry Run] Would rename ${oldPath} → ${newName}`));
     }
 
-    // 7️⃣ Sync everything else
     const logLines: string[] = [];
     const ignoreList = getIgnoreList();
 
     await generateFS(structure.root, outputDir, {
-        dryRun, // generateFS handles its own logic internally
+        dryRun, 
         ignoreList,
         onProgress(e) {
             logLines.push(`${e.type.toUpperCase()} ${e.path}`);
         },
     });
 
-    // 8️⃣ Output formatting
     if (verbose) {
         console.log(theme.primary.bold(`\n📋 Operations:`));
         console.log(theme.muted(`─`.repeat(40)));
@@ -109,7 +100,7 @@ export const rename = async ({ arg3, arg4, dryRun, summary, verbose }: Props) =>
             }
         }
     }
-
+    
     process.stdout.write("\n");
     const status = dryRun ? theme.info("[Dry Run] Rename simulated.") : theme.success.bold(`${icons.check} Renamed successfully.`);
     console.log(status);

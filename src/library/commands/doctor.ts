@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { isGitLockInstalled } from "../core/gitHooks";
+import { isGitLockInstalled } from "../../lib/utils/gitHooks";
 
 export async function doctorCommand(baseDir: string) {
   console.log("🩺 Scaffoldrite Doctor\n");

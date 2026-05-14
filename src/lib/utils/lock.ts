@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { SCAFFOLDRITE_DIR, exit } from "../../lib/utils";
+import { SCAFFOLDRITE_DIR, exit } from ".";
 import { theme, icons } from "../../data";
 import { getWorkflowContent } from "./ci";
 import {installGitLock,removeGitLock} from './gitHooks'

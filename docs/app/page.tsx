@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, FolderTree, ShieldCheck, Sparkles } from "lucide-react";
+import Logo from '../app/assets/logo.png'
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -14,17 +16,14 @@ export default function Home() {
       <header className="border-b border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-400 text-black font-black text-lg">
-              S
+            <div className="flex  items-center justify-center rounded-xl text-black font-black text-lg">
+              <Image src={Logo} alt="Scaffoldrite Logo" className="h-20 w-20" />
             </div>
 
             <div>
               <h1 className="text-lg font-bold tracking-tight">
                 Scaffoldrite
               </h1>
-              <p className="text-xs text-zinc-400">
-                Define. Enforce. Generate.
-              </p>
             </div>
           </div>
 
@@ -39,10 +38,7 @@ export default function Home() {
 
       {/* Hero */}
       <main className="mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-4 py-2 text-sm text-yellow-300">
-          <Sparkles className="h-4 w-4" />
-          Open Source Structure Toolkit
-        </div>
+       
 
         <h1 className="max-w-5xl text-5xl font-black leading-tight tracking-tight sm:text-7xl">
           Structure your projects
@@ -83,7 +79,7 @@ export default function Home() {
 
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-black p-6 text-left font-mono text-sm text-zinc-300">
             <p className="text-yellow-400">
-              npx scaffoldrite generate structure.sr
+              npx scaffoldrite generate .
             </p>
 
             <div className="mt-6 space-y-2 text-zinc-400">

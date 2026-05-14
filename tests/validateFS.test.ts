@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { FolderNode } from "../src/library/ast";
-import {validateFS} from '../src/library/validateFS'
+import { FolderNode } from "../src/src/library/ast";
+import {validateFS} from src/'../src/library/validateFS'
 
 describe("validateFS", () => {
   const tempDir = path.join(__dirname, "temp");

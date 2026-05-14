@@ -11,7 +11,6 @@ export function ensureHistoryDir() {
   }
 }
 
-
 export function writeHistory(entry: HistoryEntry) {
   ensureHistoryDir();
   const filename = `${entry.id}-${entry.command}.json`;

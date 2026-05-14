@@ -1,11 +1,9 @@
 import fs from "fs";
-
 import { parseStructure } from "./parser";
 import { createProgressBar } from "./progress";
 
 import {
     DEFAULT_TEMPLATE,
-    DEFAULT_IGNORE_TEMPLATE,
     icons,
     theme,
 } from "../data/index";
@@ -31,6 +29,7 @@ import type {
     HistoryEntry,
 } from "../types/index";
 
+
 // Commands
 import { init } from "./commands/init";
 import { update } from "./commands/update";
@@ -50,10 +49,7 @@ import { doctorCommand } from "./commands/doctor";
 
 
 
-
-// ======================================================
 // ARGS
-// ======================================================
 
 const args = process.argv
     .slice(3)
@@ -64,10 +60,7 @@ const arg4 = args[1];
 
 
 
-
-// ======================================================
 // FLAGS
-// ======================================================
 
 const passedFlags = getPassedFlags();
 const allowedFlags = ALLOWED_FLAGS[command];
@@ -112,10 +105,7 @@ const allowExtra =
 
 
 
-
-// ======================================================
 // SHARED
-// ======================================================
 
 const parsed = parseStructure(DEFAULT_TEMPLATE);
 
@@ -123,11 +113,7 @@ const bar = createProgressBar();
 
 
 
-
-// ======================================================
 // INIT CHECK
-// ======================================================
-
 const requiresInit = [
     "update",
     "merge",
@@ -138,6 +124,7 @@ const requiresInit = [
     "rename",
     "list",
 ];
+
 
 if (requiresInit.includes(command)) {
     const isInitialized =
@@ -160,11 +147,7 @@ if (requiresInit.includes(command)) {
 }
 
 
-
-
-// ======================================================
 // COMMAND VALIDATION
-// ======================================================
 
 if (!command || command === "--help" || command === "-h") {
     printUsage();
@@ -211,10 +194,7 @@ if (invalidFlags?.length > 0) {
 
 
 
-
-// ======================================================
 // RULE CHECKS
-// ======================================================
 
 checkMutuallyExclusiveFlags({
     command,
@@ -229,6 +209,9 @@ checkMutuallyExclusiveFlags({
     isDiff,
     theme,
     icons,
+    serve,
+    standalone: showStandalone,
+    circular: showCircular,
 });
 
 runRequirements({
@@ -240,11 +223,7 @@ runRequirements({
 });
 
 
-
-
-// ======================================================
 // CLI CONTEXT
-// ======================================================
 
 export interface CLIContext {
     command: string;
@@ -293,6 +272,8 @@ export interface CLIContext {
 
     baseDir: string;
 }
+
+
 
 export const ctx: CLIContext = {
     command,
@@ -344,10 +325,7 @@ export const ctx: CLIContext = {
 
 
 
-
-// ======================================================
 // COMMAND HANDLERS
-// ======================================================
 
 export const commandHandlers: Record<
     string,
@@ -401,23 +379,19 @@ export const commandHandlers: Record<
             dryRun: ctx.dryRun,
         }),
 
-    find: () =>
-        find({
+    find: () =>find({
             arg3: ctx.arg3,
             isFS: ctx.isFS,
             isStructure: ctx.isStructure,
             hasAgainst: ctx.hasAgainst,
-            againstValue: ctx.againstValue,
-        }),
+            againstValue: ctx.againstValue,}),
 
-    merge: () =>
-        merge({
+    merge: () => merge({
             arg3: ctx.arg3,
             dryRun: ctx.dryRun,
         }),
 
-    list: () =>
-        list({
+    list: () => list({
             isFS: ctx.isFS,
             isDiff: ctx.isDiff,
             isStructure: ctx.isStructure,
@@ -426,16 +400,14 @@ export const commandHandlers: Record<
             hasAgainst: ctx.hasAgainst,
         }),
 
-    deps: () =>
-        deps({
+    deps: () => deps({
             isFS: ctx.isFS,
             showCircular: ctx.showCircular,
             showStandalone: ctx.showStandalone,
             serve: ctx.serve,
         }),
 
-    generate: () =>
-        generate({
+    generate: () => generate({
             arg3: ctx.arg3,
             againstValue: ctx.againstValue,
             isLocalAst: ctx.isLocalAst,
@@ -448,8 +420,7 @@ export const commandHandlers: Record<
             hasAgainst: ctx.hasAgainst,
         }),
 
-    lock: () =>
-        lock({
+    lock: () => lock({
             againstValue: ctx.againstValue,
             onlyAgainst: ctx.onlyAgainst,
             prePush: ctx.prePush,

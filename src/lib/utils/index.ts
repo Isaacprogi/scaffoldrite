@@ -540,7 +540,7 @@ export function checkMutuallyExclusiveFlags(ctx: MutuallyExclusiveContext) {
   const { 
     command, summary, verbose, empty, fromFs, 
     ignoreTooling, copyContents, isFS, isStructure, isDiff,
-    theme, icons
+    theme, icons, serve, standalone, circular
   } = ctx;
 
   const fail = (message: string) => {

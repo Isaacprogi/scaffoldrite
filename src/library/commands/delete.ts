@@ -1,4 +1,4 @@
-import { preventIfStructureLocked } from "../core/lock";
+import { preventIfStructureLocked } from "../../lib/utils/lock";
 import { validateConstraints } from "../validator";
 import { baseDir, loadAST, saveStructure } from "../../lib/utils";
 import { deleteNode } from "../structure";
@@ -30,7 +30,6 @@ export const del = async ({arg3,dryRun,verbose,summary}:Props) => {
             exit(1);
         }
 
-        // 1️⃣ Update in-memory AST
         deleteNode(structure.root, targetPath);
 
         validateConstraints(structure.root, structure.constraints);
@@ -43,7 +42,6 @@ export const del = async ({arg3,dryRun,verbose,summary}:Props) => {
             return;
         }
 
-        // 3️⃣ Save structure update (Guard with dryRun)
         if (!dryRun) {
             saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
         } else {
@@ -53,7 +51,6 @@ export const del = async ({arg3,dryRun,verbose,summary}:Props) => {
         const logLines: string[] = [];
         const ignoreList = getIgnoreList();
 
-        // 4️⃣ Sync Filesystem
         await generateFS(structure.root, outputDir, {
             dryRun, // This utility already handles the physical deletion logic
             ignoreList,
@@ -62,7 +59,6 @@ export const del = async ({arg3,dryRun,verbose,summary}:Props) => {
             },
         });
 
-        // 5️⃣ Output UI
         if (verbose) {
             console.log(theme.primary.bold(`\n📋 Operations:`));
             console.log(theme.muted(`─`.repeat(40)));

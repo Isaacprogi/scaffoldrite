@@ -3,6 +3,29 @@ import path from "path";
 import { FolderNode, FileNode } from "./ast";
 import { theme, icons } from "../data";
 import { execSync } from "child_process";
+import { minimatch } from 'minimatch';
+
+function isIgnored(filePath: string, baseDir: string, ignoreList: string[]): boolean {
+  const relativePath = path.relative(baseDir, filePath);
+  const normalizedRelPath = relativePath.replace(/[\\/]/g, '/');
+  
+  return ignoreList.some(pattern => {
+    const normalizedPattern = pattern.replace(/[\\/]/g, '/');
+    
+    // Check if pattern matches the relative path (for nested paths)
+    if (normalizedPattern.includes('/')) {
+      return minimatch(normalizedRelPath, normalizedPattern);
+    }
+    
+    // For simple names, check basename
+    return path.basename(filePath) === pattern;
+  });
+}
+
+function isScaffoldriteInternal(dir: string, p: string) {
+  const rel = path.relative(dir, p);
+  return rel === ".scaffoldrite" || rel.startsWith(".scaffoldrite" + path.sep);
+}
 
 export function buildASTFromFS(
   dir: string,
@@ -22,16 +45,9 @@ export function buildASTFromFS(
     children: [],
   };
 
-  const isScaffoldriteInternal = (p: string) => {
-    const rel = path.relative(dir, p);
-    return rel === ".scaffoldrite" || rel.startsWith(".scaffoldrite" + path.sep);
-  };
-
-  function scan(folderPath: string, node: FolderNode) {
-
+  function scan(folderPath: string, node: FolderNode) { 
     const items = fs.readdirSync(folderPath);
 
-    // 🔥 SORTING LOGIC (folders first, then alphabetical)
     const sortedItems = items
       .map((item) => {
         const itemPath = path.join(folderPath, item);
@@ -44,20 +60,16 @@ export function buildASTFromFS(
         };
       })
       .sort((a, b) => {
-        // 1️⃣ Folders first
         if (a.isDirectory && !b.isDirectory) return -1;
         if (!a.isDirectory && b.isDirectory) return 1;
-
-        // 2️⃣ Alphabetical (case-insensitive)
         return a.name.localeCompare(b.name, undefined, {
           sensitivity: "base",
         });
       });
 
     for (const item of sortedItems) {
-
-      if (ignoreList.includes(item.name)) continue;
-      if (isScaffoldriteInternal(item.path)) continue;
+      if (isIgnored(item.path, dir, ignoreList)) continue;
+      if (isScaffoldriteInternal(dir, item.path)) continue;
 
       if (item.isDirectory) {
         const childFolder: FolderNode = {
@@ -84,46 +96,48 @@ export function buildASTFromFS(
   return root;
 }
 
-
-
 export function buildASTFromGit(
   ref: string,
   ignoreList: string[] = []
 ): FolderNode {
   try {
-    // 1. Get all files tracked at that ref (recursive)
-    // -r: recursive, --name-only: paths only
     const output = execSync(`git ls-tree -r --name-only ${ref}`, { 
       encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'ignore'] // Prevents git errors from polluting stdout
+      stdio: ['pipe', 'pipe', 'ignore'] 
     });
     
     const files = output.split('\n').filter(Boolean);
 
     const root: FolderNode = {
       type: "folder",
-      name: ref, // Named after the branch/ref
+      name: ref,
       children: [],
     };
 
-    // 2. Helper to insert paths into the tree structure
     const insertPath = (filePath: string) => {
       const parts = filePath.split('/');
       let currentNode = root;
 
       for (let i = 0; i < parts.length; i++) {
         const name = parts[i];
+        const currentPath = parts.slice(0, i + 1).join('/');
         const isLast = i === parts.length - 1;
 
-        // Skip ignored items
-        if (ignoreList.includes(name)) return;
+        // Check if this path segment should be ignored
+        if (isIgnored(currentPath, '', ignoreList)) return;
+        
+        // Also check individual name against simple patterns
+        const isNameIgnored = ignoreList.some(pattern => {
+          const normalizedPattern = pattern.replace(/[\\/]/g, '/');
+          return !normalizedPattern.includes('/') && name === pattern;
+        });
+        
+        if (isNameIgnored) return;
 
         if (isLast) {
-          // Add as File
           const childFile: FileNode = { type: "file", name };
           currentNode.children.push(childFile);
         } else {
-          // Find or Create Folder
           let folder = currentNode.children.find(
             (child) => child.type === "folder" && child.name === name
           ) as FolderNode;
@@ -139,22 +153,18 @@ export function buildASTFromGit(
 
     files.forEach(insertPath);
 
-    // 3. RECURSIVE SORTING (Matching your buildASTFromFS logic)
     const sortTree = (node: FolderNode) => {
       node.children.sort((a, b) => {
-        // 1️⃣ Folders first
         const aIsDir = a.type === "folder";
         const bIsDir = b.type === "folder";
         if (aIsDir && !bIsDir) return -1;
         if (!aIsDir && bIsDir) return 1;
 
-        // 2️⃣ Alphabetical (case-insensitive)
         return a.name.localeCompare(b.name, undefined, {
           sensitivity: "base",
         });
       });
 
-      // Recurse into folders
       for (const child of node.children) {
         if (child.type === "folder") {
           sortTree(child);

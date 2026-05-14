@@ -59,6 +59,9 @@ export type MutuallyExclusiveContext = {
   isDiff: boolean;
   theme: any; 
   icons: any;
+  serve: boolean;
+  standalone: boolean;
+  circular: boolean;
 };
 
 

@@ -2,8 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 import { findStandaloneFiles, detectCircular, buildDependencyGraph } from "./deps";
-import { baseDir } from "../../lib/utils";
-import { getIgnoreList } from "../../lib/utils";
+import { baseDir } from ".";
+import { getIgnoreList } from ".";
 
 export function startServer(
   graph: any,
@@ -11,6 +11,8 @@ export function startServer(
   standalone: string[],
   port = 3210
 ) {
+
+
   const distPath = path.resolve(__dirname, "../../../src/front/dist");
 
 
@@ -89,4 +91,5 @@ export function startServer(
     console.log(`🔄 Circular chains: ${circular.length}`);
     console.log(`📄 Standalone files: ${standalone.length}`);
   });
+
 }

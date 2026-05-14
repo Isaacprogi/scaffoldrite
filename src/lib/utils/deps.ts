@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { FolderNode, FileNode } from "../ast";
-import { visit } from "../visitor";
+import { FolderNode, FileNode } from "../../library/ast";
+import { visit } from "../../library/visitor";
 
 export type DependencyGraph = Record<string, string[]>;
 

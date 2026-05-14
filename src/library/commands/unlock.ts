@@ -2,9 +2,9 @@ import { baseDir } from "../../lib/utils";
 import { theme } from "../../data";
 import { icons } from "../../data";
 import { hasFlag } from "../../lib/utils";
-import { removeGitLock } from "../core/gitHooks";
-import { removeStructureLock } from "../core/lock";
-import { disableCI } from "../core/lock";
+import { removeGitLock } from "../../lib/utils/gitHooks";
+import { removeStructureLock } from "../../lib/utils/lock";
+import { disableCI } from "../../lib/utils/lock";
 
 
 interface Props {
