@@ -115,7 +115,7 @@ sr validate
 
 Full documentation, guides, and advanced usage:
 
-👉 [https://github.com/isaacprogi/scaffoldrite](https://github.com/isaacprogi/scaffoldrite)
+👉 [https://isaacprogi.github.io/scaffoldrite/](https://isaacprogi.github.io/scaffoldrite/)
 
 ---
 
