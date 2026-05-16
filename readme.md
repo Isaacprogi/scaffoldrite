@@ -135,4 +135,4 @@ MIT
 
 **Your project structure is code. Treat it that way.**
 
-*Happy structuring 🏗️*
+*Happy structuring*
