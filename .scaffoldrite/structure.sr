@@ -136,8 +136,7 @@ folder src {
       file index.ts
     }
     folder public {
-      file favicon.svg
-      file icons.svg
+      file logo.png
     }
     folder src {
       folder assets {
