@@ -1,6 +1,6 @@
 import { Node, FolderNode, FileNode } from "./ast";
 import { Constraint } from "./constraints";
-import { theme, icons } from "../data/index.js"; // Import your theme
+import { theme, icons } from "../data/index.js"; 
 
 function normalizePath(path?: string) {
   if (!path || path.trim() === "") return "__root__";

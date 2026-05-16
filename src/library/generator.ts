@@ -41,6 +41,7 @@ export async function generateFS(
   const force = options?.force ?? false;
   const failures: string[] = [];
 
+  
   const isScaffoldriteInternal = (p: string) => {
     const rel = path.relative(root, p);
     return rel === ".scaffoldrite" || rel.startsWith(".scaffoldrite" + path.sep);

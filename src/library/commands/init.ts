@@ -95,7 +95,6 @@ export const init = async ({ dryRun, empty, force, parsed, migrate, fromFs, arg3
     } else if (fromFs) {
         const targetDir = path.resolve(arg3 ?? baseDir);
         const ignoreList = getIgnoreList();
-        console.log(ignoreList)
         const ast = buildASTFromFS(targetDir, ignoreList);
         if (!dryRun) {
             saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);

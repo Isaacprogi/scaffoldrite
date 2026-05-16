@@ -13,6 +13,7 @@ interface Props {
     prePush:boolean;
 }
 
+
 export const  lock =  async ({againstValue,onlyAgainst,prePush,hasAgainst}:Props) => {
 
         if (hasFlag("--git")) {
@@ -29,11 +30,11 @@ export const  lock =  async ({againstValue,onlyAgainst,prePush,hasAgainst}:Props
             enableCI({ ref: againstValue, onlyAgainst, hasAgainst });
             return;
         }
-        if (hasFlag("--config")) {
-            console.log(theme.warning(`${icons.warning} Warning: This may remove Scaffoldrite-related config settings. Use with caution.`));
-            await applyConfigSettings(baseDir, { ref: againstValue, onlyAgainst, hasAgainst });
-            return;
-        }
+        // if (hasFlag("--config")) {
+        //     console.log(theme.warning(`${icons.warning} Warning: This may remove Scaffoldrite-related config settings. Use with caution.`));
+        //     await applyConfigSettings(baseDir, { ref: againstValue, onlyAgainst, hasAgainst });
+        //     return;
+        // }
 
         console.log(theme.error(`${icons.info} Please specify a lock type:`));
         console.log(theme.muted(`  scaffoldrite unlock --git`));

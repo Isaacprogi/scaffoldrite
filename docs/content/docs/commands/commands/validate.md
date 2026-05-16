@@ -121,5 +121,3 @@ sr validate --allow-extra src,assets
 * `update` — Update structure.sr from filesystem
 * `list` — View the structure and filesystem
 * `find` — Search for files or folders
-
----

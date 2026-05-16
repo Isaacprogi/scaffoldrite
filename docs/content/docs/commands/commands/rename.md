@@ -26,13 +26,13 @@ sr rename <old-path> <new-name> [flags]
 
 ---
 
-## Flags
+| Flag          | Description                                   | Example                                 |
+| ------------- | --------------------------------------------- | --------------------------------------- |
+| `--yes`, `-y` | Skip confirmation prompts                     | `sr rename src/temp temp-new --yes`     |
+| `--dry-run`   | Preview rename without applying changes       | `sr rename src/temp temp-new --dry-run` |
+| `--verbose`   | Show detailed execution output                | `sr rename src/temp temp-new --verbose` |
+| `--summary`   | Show summarized result after rename operation | `sr rename src/temp temp-new --summary` |
 
-| Flag          | Description                               | Example                                 |
-| ------------- | ----------------------------------------- | --------------------------------------- |
-| `--yes`, `-y` | Skip confirmation prompts                 | `sr rename src/temp temp-new --yes`     |
-| `--dry-run`   | Preview the rename without changing files | `sr rename src/temp temp-new --dry-run` |
-| `--verbose`   | Show detailed execution output            | `sr rename src/temp temp-new --verbose` |
 
 ---
 

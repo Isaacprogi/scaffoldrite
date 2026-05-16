@@ -157,50 +157,125 @@ export async function preventIfStructureLocked(commandName: string) {
 
 export async function applyConfigSettings(baseDir: string, options?: { ref?: string; onlyAgainst?: boolean, hasAgainst?: boolean }) {
   console.log(theme.info("Applying configuration settings..."));
-  const DEFAULT_SETTINGS = {
-    ciEnabled: true,
-    preCommitEnabled: true,
-    prePushEnabled: false,
-    structureLocked: false
-  };
 
-  // Read current settings or create defaults
+  // Read settings.json - this is the source of truth
   let settings = readSettings();
-  let settingsExist = Object.keys(settings).length > 0;
-
+  
+  // If no settings file exists, create default settings
+  const settingsExist = Object.keys(settings).length > 0;
   if (!settingsExist) {
+    const DEFAULT_SETTINGS = {
+      ciEnabled: true,
+      preCommitEnabled: true,
+      prePushEnabled: false,
+      structureLocked: false
+    };
     settings = DEFAULT_SETTINGS;
     writeSettings(settings);
-    console.log(theme.success(`${icons.lock} Created default settings.`));
+    console.log(theme.success(`${icons.success} Created default settings.json`));
   }
 
-  // Apply CI
-  if (settings.ciEnabled) {
-    enableCI(options);
-  } else {
-    disableCI();
+  // Apply CI based on settings.json
+  if (settings.ciEnabled === true) {
+    // Only enable if not already enabled
+    if (!isCIEnabled()) {
+      enableCI(options);
+    } else {
+      console.log(theme.info(`ℹ CI is already enabled`));
+    }
+  } else if (settings.ciEnabled === false) {
+    // Remove CI completely if disabled
+    if (isCIEnabled()) {
+      disableCI();
+    } else {
+      console.log(theme.info(`ℹ CI is already disabled`));
+    }
   }
 
-  // Apply pre-commit hook
-  if (settings.preCommitEnabled) {
-    installGitLock(baseDir, { prePush: false });
-  } else {
-    removeGitLock(baseDir, { prePush: false });
+  // Apply pre-commit hook based on settings.json
+  if (settings.preCommitEnabled === true) {
+    // Only install if not already installed
+    if (!isPreCommitHookEnabled()) {
+      installGitLock(baseDir, { prePush: false });
+      // Update the setting to reflect it's enabled
+      const currentSettings = readSettings();
+      if (!currentSettings.preCommitEnabled) {
+        currentSettings.preCommitEnabled = true;
+        writeSettings(currentSettings);
+      }
+    } else {
+      console.log(theme.info(`ℹ Pre-commit hook is already enabled`));
+    }
+  } else if (settings.preCommitEnabled === false) {
+    // Remove pre-commit hook completely if disabled
+    if (isPreCommitHookEnabled()) {
+      removeGitLock(baseDir, { prePush: false });
+      // Update the setting to reflect it's disabled
+      const currentSettings = readSettings();
+      if (currentSettings.preCommitEnabled) {
+        currentSettings.preCommitEnabled = false;
+        writeSettings(currentSettings);
+      }
+    } else {
+      console.log(theme.info(`ℹ Pre-commit hook is already disabled`));
+    }
   }
 
-  // Apply pre-push hook
-  if (settings.prePushEnabled) {
-    installGitLock(baseDir, { prePush: true });
-  } else {
-    removeGitLock(baseDir, { prePush: true });
+  // Apply pre-push hook based on settings.json
+  if (settings.prePushEnabled === true) {
+    // Only install if not already installed
+    if (!isPrePushHookEnabled()) {
+      installGitLock(baseDir, { prePush: true });
+      // Update the setting to reflect it's enabled
+      const currentSettings = readSettings();
+      if (!currentSettings.prePushEnabled) {
+        currentSettings.prePushEnabled = true;
+        writeSettings(currentSettings);
+      }
+    } else {
+      console.log(theme.info(`ℹ Pre-push hook is already enabled`));
+    }
+  } else if (settings.prePushEnabled === false) {
+    // Remove pre-push hook completely if disabled
+    if (isPrePushHookEnabled()) {
+      removeGitLock(baseDir, { prePush: true });
+      // Update the setting to reflect it's disabled
+      const currentSettings = readSettings();
+      if (currentSettings.prePushEnabled) {
+        currentSettings.prePushEnabled = false;
+        writeSettings(currentSettings);
+      }
+    } else {
+      console.log(theme.info(`ℹ Pre-push hook is already disabled`));
+    }
   }
 
-  // Apply structure lock
-  if (settings.structureLocked) {
-    installStructureLock();
-  } else {
-    removeStructureLock();
+  // Apply structure lock based on settings.json
+  if (settings.structureLocked === true) {
+    // Only lock if not already locked
+    if (!isStructureLocked()) {
+      const currentSettings = readSettings();
+      if (!currentSettings.structureLocked) {
+        currentSettings.structureLocked = true;
+        writeSettings(currentSettings);
+      }
+      console.log(theme.success(`${icons.lock} Structure editing locked.`));
+    } else {
+      console.log(theme.info(`ℹ Structure editing is already locked`));
+    }
+  } else if (settings.structureLocked === false) {
+    // Unlock structure completely if disabled
+    if (isStructureLocked()) {
+      const currentSettings = readSettings();
+      if (currentSettings.structureLocked) {
+        currentSettings.structureLocked = false;
+        writeSettings(currentSettings);
+      }
+      console.log(theme.success(`${icons.unlock} Structure editing unlocked.`));
+    } else {
+      console.log(theme.info(`ℹ Structure editing is already unlocked`));
+    }
   }
 
-  console.log(theme.info(`${icons.success} All settings applied according to configuration.`));
+  console.log(theme.success(`${icons.success} All settings applied according to settings.json`));
 }

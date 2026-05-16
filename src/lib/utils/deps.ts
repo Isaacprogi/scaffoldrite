@@ -206,15 +206,24 @@ export function printDependencyTree(graph: DependencyGraph) {
     });
   }
 
-  const roots = findStandaloneFiles(graph);
+  const roots = findStandaloneFilesPrint(graph);
 
   roots.forEach((root, index) => {
     print(root, "", index === roots.length - 1);
   });
 }
 
+export function findStandaloneFiles(graph: DependencyGraph): string[] {
+  const imported = new Set<string>();
+  Object.values(graph).forEach((deps) => deps.forEach((d) => imported.add(d)));
+
+  return Object.keys(graph).filter(
+    (f) => !imported.has(f) && (graph[f] || []).length === 0
+  );
+}
+
 // ------------------- STANDALONE FILES -------------------
-export function findStandaloneFiles(
+export function findStandaloneFilesPrint(
   graph: DependencyGraph
 ): string[] {
   const imported = new Set<string>();

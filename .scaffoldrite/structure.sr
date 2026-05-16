@@ -61,19 +61,21 @@ folder docs {
         folder commands {
           file create.md
           file delete.md
+          file deps.md
           file find.md
           file generate.md
           file init.md
           file list.md
+          file lock.md
           file merge.md
           file rename.md
+          file unlock.md
           file update.md
           file validate.md
         }
-        file command-reference.md
+        file command-reference-and-positional-arguments.md
         file flags-reference.md
         file index.md
-        file positional-arguments.md
       }
       folder release {
         file v3.md
@@ -87,6 +89,7 @@ folder docs {
       file getting-started.md
       file ignoring-files.md
       file index.md
+      file meta.json
       file project-configuration.md
       file real-world-workflows.md
       file structure-language.md
@@ -183,6 +186,8 @@ folder src {
       file deps.ts
       file gitHooks.ts
       file graph-server.ts
+      file ignore-matcher.ts
+      file ignore-parser.ts
       file index.ts
       file lock.ts
     }

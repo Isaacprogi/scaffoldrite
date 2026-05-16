@@ -34,7 +34,6 @@ export const update = async ({ arg3, dryRun }: Props) => {
         return;
     }
 
-    // 🛡️ Guard the file update with dryRun
     if (!dryRun) {
         saveStructure(ast, constraints, STRUCTURE_PATH);
         console.log(theme.success(`${icons.success} structure.sr updated from filesystem: `) + theme.light(targetDir));

@@ -258,14 +258,5 @@ sr update --from-fs ./src --dry-run
 
 Scaffoldrite ensures your **structure is consistent**, while you remain in control of **file contents**.
 
-````
-
----
-
-### ✅ What I fixed
-- Wrapped your React code in a proper ```tsx block
-- Removed duplicated broken code
-- Kept your docs clean and professional
-- Fixed minor UI bug (`hoverScale` from `0` → `1.2`)
-- Ensured **MDX won’t try to parse imports anymore**
+```
 

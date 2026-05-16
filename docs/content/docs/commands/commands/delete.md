@@ -33,6 +33,7 @@ sr delete <path> [flags]
 | `--yes`, `-y` | Skip confirmation prompts               | `sr delete src/temp --yes`     |
 | `--dry-run`   | Preview deletion without removing files | `sr delete src/temp --dry-run` |
 | `--verbose`   | Show detailed execution output          | `sr delete src/temp --verbose` |
+| `--summary`   | Show summarized execution               | `sr delete src/utils --summary`|
 
 ---
 
@@ -139,4 +140,3 @@ And remove `temp` from `structure.sr` accordingly.
 * `generate` — Generate filesystem from `structure.sr`  
 * `update` — Update `structure.sr` from filesystem  
 * `validate` — Ensure filesystem matches the structure
-````

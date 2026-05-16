@@ -186,4 +186,3 @@ project.json
 * `merge` — Merge filesystem into structure
 * `validate` — Ensure filesystem matches the structure
 
----

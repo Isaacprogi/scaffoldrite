@@ -18,7 +18,7 @@ This ensures that your **actual project files stay synchronized with your define
 
 ```bash
 sr create <path> <type> [flags]
-````
+```
 
 * `<path>` — Full path of the file or folder to create
 * `<type>` — Either `file` or `folder`

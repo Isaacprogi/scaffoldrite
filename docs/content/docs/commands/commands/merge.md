@@ -32,6 +32,7 @@ Use `.` to scan the **project root directory**.
 | `--yes`, `--y` | Skip confirmation prompts |
 | `--dry-run` | Preview merge changes without modifying `structure.sr` |
 | `--verbose` | Display detailed execution logs |
+| `--summary` | Print summarized execution logs |
 
 ---
 

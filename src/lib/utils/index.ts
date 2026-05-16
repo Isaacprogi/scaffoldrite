@@ -326,17 +326,21 @@ export function getFlagValuesAfter(flag: string) {
 }
 
 export const ALLOWED_FLAGS: Record<string, string[]> = {
-  init: ["--force", "--empty", "--from-fs", "--migrate","--dry-run"],
-  update: ["--from-fs", "--yes", "-y",'--dry-run'],
-  merge: ["--from-fs", "--yes", "-y",'--dry-run'],
+  init: ["--force", "--empty", "--from-fs", "--migrate", "--dry-run"],
+
+  update: ["--from-fs", "--yes", "-y", "--dry-run"],
+
+  merge: ["--from-fs", "--yes", "-y", "--dry-run"],
+
   validate: [
-  "--rules",
-  "--allow-extra",
-    '--against',
-    '--against-ref',
-    '--ag',
-    '--ag-ref',
-],
+    "--rules",
+    "--allow-extra",
+    "--against",
+    "--against-ref",
+    "--ag",
+    "--ag-ref",
+  ],
+
   generate: [
     "--yes",
     "--dry-run",
@@ -344,112 +348,232 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--summary",
     "--ignore-tooling",
     "--copy",
-    '--against',
-    '--against-ref',
-    '--ag',
-    '--ag-ref',
-    '--force',
-    '--local-ast'
+    "--against",
+    "--against-ref",
+    "--ag",
+    "--ag-ref",
+    "--force",
+    "--local-ast",
   ],
-  create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
+
+  create: [
+    "--force",
+    "--if-not-exists",
+    "--yes",
+    "--dry-run",
+    "--verbose",
+    "--summary",
+  ],
+
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
+
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
-  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",
-    '--against',
-    '--against-ref',
-    '--ag',
-    '--ag-ref',
+
+  list: [
+    "--structure",
+    "--sr",
+    "--fs",
+    "--diff",
+    "--with-icon",
+    "--against",
+    "--against-ref",
+    "--ag",
+    "--ag-ref",
   ],
-  find: ["--structure", "--sr", "--fs",
-    '--against',
-    '--against-ref',
-    '--ag',
-    '--ag-ref',
+
+  find: [
+    "--structure",
+    "--sr",
+    "--fs",
+    "--against",
+    "--against-ref",
+    "--ag",
+    "--ag-ref",
   ],
+
   version: [],
-   // New commands for hooks
-  lock: ["--pre-push",'--git','--structure', "--sr", '--ci',
-    '--against',
-    '--against-ref',
-    '--ag',
-    '--ag-ref',
-    '--only','--config'],   
-  unlock: ["--pre-push",'--git','--structure', "--sr", '--ci'], 
+
+  // Hooks
+  lock: [
+    "--pre-push",
+    "--git",
+    "--structure",
+    "--sr",
+    "--ci",
+    "--against",
+    "--against-ref",
+    "--ag",
+    "--ag-ref",
+    "--only",
+  ],
+
+  unlock: [
+    "--pre-push",
+    "--git",
+    "--structure",
+    "--sr",
+    "--ci",
+  ],
+
   doctor: [],
- deps: [
-  "--graph",
-  "--circular",
-  "--standalone",
-  "--json",
-  "--serve",
-  "--fs"
-],
- changelog: [
-  "--json",
-  "--serve",
- ]
+
+  deps: [
+    "--circular",
+    "--standalone",
+    "--serve",
+    "--fs",
+    "--against",
+    "--against-ref",
+    "--ag",
+    "--ag-ref",
+  ],
 };
 
 export function printUsage(cmd?: string) {
   const argsMap: Record<string, string> = {
-    init: "[--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate]",
-    update: "[--from-fs [dir]] [--yes | -y]",
-    merge: "[--from-fs [dir]] [--yes | -y]",
-    validate: "[--allow-extra] [--allow-extra <path1> <path2> ...]",
-    generate: "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling]",
-    list: "[[--structure | --sr] | --fs | --diff] [--with-icon]",
-    create: "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
-    delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
-    rename: "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
-    find: "<query> [--structure | --sr | --fs]",
+    init:
+      "[--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate] [--dry-run]",
+
+    update:
+      "[--from-fs [dir]] [--yes | -y] [--dry-run]",
+
+    merge:
+      "[--from-fs [dir]] [--yes | -y] [--dry-run]",
+
+    validate:
+      "[--rules] [--allow-extra] [--against <path>] [--against-ref <ref>]",
+
+    generate:
+      "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling] [--copy] [--force] [--local-ast]",
+
+    list:
+      "[[--structure | --sr] | --fs | --diff] [--with-icon]",
+
+    create:
+      "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
+
+    delete:
+      "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
+
+    rename:
+      "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
+
+    find:
+      "<query> [--structure | --sr | --fs]",
+
     version: "",
 
-    // New commands usage
-    lock: "[--pre-push]    Install pre-commit (default) or pre-push hook",
-    unlock: "[--pre-push]    Remove pre-commit (default) or pre-push hook",
-    doctor: "              Verify hook health",
-    changelog:  "[--json] [--serve]"
+    lock:
+      "[--pre-push] [--git] [--ci] [--only <hook>]",
+
+    unlock:
+      "[--pre-push] [--git] [--ci]",
+
+    doctor:
+      "Verify hook health",
+
+    deps:
+      "[path] [--circular] [--standalone] [--serve] [--fs]\n" +
+      "       (--fs analyzes the live filesystem instead of structure.sr)",
   };
 
   if (cmd && argsMap[cmd]) {
     const args = argsMap[cmd] ? ` ${argsMap[cmd]}` : "";
+
     console.log(
       theme.primary.bold(`Usage for '${cmd}':`) +
-      theme.light(`\n  scaffoldrite ${cmd}${args}`)
+        theme.light(`\n  scaffoldrite ${cmd}${args}`)
     );
   } else if (cmd) {
     console.log(
-      theme.error.bold(`Unknown command '${cmd}'. Showing general usage:\n`)
+      theme.error.bold(
+        `Unknown command '${cmd}'. Showing general usage:\n`
+      )
     );
+
     printUsage();
   } else {
-    console.log(theme.primary.bold(`
+    console.log(
+      theme.primary.bold(`
 Usage:
-  scaffoldrite init [--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate]
-  scaffoldrite update [--from-fs [dir]] [--yes | -y]
-  scaffoldrite merge [--from-fs [dir]] [--yes | -y]
-  scaffoldrite validate [--allow-extra] [--allow-extra <path1> <path2> ...]
-  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling]
+  scaffoldrite init [--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate] [--dry-run]
+
+  scaffoldrite update [--from-fs [dir]] [--yes | -y] [--dry-run]
+
+  scaffoldrite merge [--from-fs [dir]] [--yes | -y] [--dry-run]
+
+  scaffoldrite validate [--rules] [--allow-extra] [--against <path>] [--against-ref <ref>]
+
+  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary]
+                           [--ignore-tooling] [--copy] [--force] [--local-ast]
+
   scaffoldrite list [[--structure | --sr] | --fs | --diff] [--with-icon]
+
   scaffoldrite find <query> [--structure | --sr | --fs]
-  scaffoldrite create <path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]
-  scaffoldrite delete <path> [--yes | -y] [--dry-run] [--verbose | --summary]
-  scaffoldrite rename <path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]
+
+  scaffoldrite create <path> <file|folder>
+                          [--force | --if-not-exists]
+                          [--yes | -y]
+                          [--dry-run]
+                          [--verbose | --summary]
+
+  scaffoldrite delete <path>
+                          [--yes | -y]
+                          [--dry-run]
+                          [--verbose | --summary]
+
+  scaffoldrite rename <path> <newName>
+                          [--yes | -y]
+                          [--dry-run]
+                          [--verbose | --summary]
+
+  scaffoldrite deps [path]
+                        [--circular]
+                        [--standalone]
+                        [--serve]
+                        [--fs]
+
+                        By default, dependency analysis uses structure.sr.
+                        Use --fs to analyze the live filesystem instead.
+
   scaffoldrite version
-  scaffoldrite lock [--pre-push]     Install pre-commit (default) or pre-push hook
-  scaffoldrite unlock [--pre-push]   Remove pre-commit (default) or pre-push hook
-  scaffoldrite doctor                Verify hook health
-  scaffoldrite --help | -h          Show this message
-`));
+
+  scaffoldrite lock [--pre-push]
+                    [--git]
+                    [--ci]
+                    [--only <hook>]
+
+  scaffoldrite unlock [--pre-push]
+                      [--git]
+                      [--ci]
+
+  scaffoldrite doctor
+
+  scaffoldrite --help | -h
+                        Show this message
+`)
+    );
   }
 }
 
-
 export const ALLOWED_COMMANDS = [
-  'init', 'update', 'merge', 'validate', 'generate',
-  'create', 'delete', 'rename', 'list', 'find',
-  'version', 'lock', 'unlock', 'doctor',"deps",'changelog'
-]
+  "init",
+  "update",
+  "merge",
+  "validate",
+  "generate",
+  "create",
+  "delete",
+  "rename",
+  "list",
+  "find",
+  "version",
+  "lock",
+  "unlock",
+  "doctor",
+  "deps",
+];
+
 
 
 

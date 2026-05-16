@@ -29,7 +29,6 @@ Scaffoldrite commands can be modified with **flags** to change their behavior. F
 | `--allow-extra <paths...>` | Allow specific extra files | `sr validate --allow-extra README.md .env` |
 | `--circular` | Show circular dependencies in structure | `sr list --circular` |
 | `--standalone` | Show standalone files in structure | `sr list --standalone` |
-| `--json` | Output results in JSON format | `sr list --json` |
 | `--serve` | Serve structure or dependency graph in a web view | `sr list --serve` |
 | `--only <ref>` | Operate only against a specific git ref | `sr validate --only origin/main` |
 | `--against <ref>` | Compare or generate against a specific git ref | `sr generate . --against origin/main` |
@@ -112,14 +111,3 @@ sr create src/components/Button.ts file --verbose --force
 * Combine `--verbose` or `--summary` to control the level of output during operations.
 
 ---
-
-Next up: [Positional Arguments Reference](/docs/commands/positional-arguments)
-
-```
-
----
-
-If you want, I can also **add a visual cheat sheet section** with grouped flags (`Safety`, `Output`, `Source`, `Advanced`) so users can quickly scan them—this is great for long CLI docs.  
-
-Do you want me to do that?
-```

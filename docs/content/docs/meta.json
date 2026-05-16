@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "index",
+    "getting-started",
+    "structure-language",
+    "commands",
+    "constraints",
+    "ignoring-files",
+    "project-configuration",
+    "filesystem-content-handling",
+    "daily-workflows",
+    "real-world-workflows",
+    "advanced-scenarios",
+    "faqs",
+    "community-license",
+    "release"
+  ]
+}

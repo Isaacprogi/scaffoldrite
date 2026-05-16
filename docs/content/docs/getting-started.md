@@ -42,17 +42,6 @@ This generates the `.scaffoldrite/` folder with:
 * `.scaffoldignore` – files and folders to ignore
 * `project.json` – project metadata
 
-> If you’re migrating from v1.x, use:
-
-```bash
-sr init --migrate
-```
-
-Use `--force` to overwrite existing configs:
-
-```bash
-sr init --migrate --force
-```
 
 ---
 
@@ -82,7 +71,6 @@ constraints {
 
 * **Literal names**: Scaffoldrite creates exactly what you declare.
 * **Constraints**: Enforce rules like max files, required files, or naming patterns.
-
 ---
 
 ## 4. Generate Your Structure

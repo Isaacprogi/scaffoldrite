@@ -1,8 +1,23 @@
 import fs from "fs";
 import path from "path";
 import { FolderNode } from "./ast";
-import { isIgnored } from "../lib/utils";
+import { minimatch } from 'minimatch';
 import { theme, icons } from "../data/index";
+
+
+function isItemIgnored(item: string, currentPath: string, ignoreList: string[]): boolean {
+  return ignoreList.some(pattern => {
+    const normalizedPattern = pattern.replace(/[\\/]/g, '/');
+
+    if (normalizedPattern.includes('/')) {
+      const fullPath = path.join(currentPath, item);
+      const normalizedFullPath = fullPath.replace(/[\\/]/g, '/');
+      return minimatch(normalizedFullPath, normalizedPattern);
+    }
+
+    return item === pattern;
+  });
+}
 
 export function validateFS(
   root: FolderNode,
@@ -23,8 +38,6 @@ export function validateFS(
 
   const effectiveIgnoreList = [...ignoreList, ".scaffoldrite"];
 
-  
-
   if (!fs.existsSync(dir)) {
     throw new Error(
       `${icons.error} ${theme.error('Folder does not exist:')} ${theme.highlight(dir)}\n` +
@@ -34,9 +47,8 @@ export function validateFS(
 
   const actualItems = fs.readdirSync(dir);
 
-  // Check missing items in filesystem
   for (const child of root.children) {
-    if (isIgnored(child.name, effectiveIgnoreList)) continue;
+    if (isItemIgnored(child.name, currentPath, effectiveIgnoreList)) continue;
 
     const expectedPath = path.join(dir, child.name);
     const expectedSrPath = path.join(currentPath, child.name);
@@ -51,7 +63,6 @@ export function validateFS(
       });
 
       if (allowExtra || allowedExplicitly) {
-        // Print info about allowed missing item
         console.log(
           `${icons.info} ${theme.info('Allowed missing:')} ${theme.muted(expectedSrPath)} ` +
           `${theme.muted(allowedExplicitly ? '(explicitly allowed)' : '(via --allow-extra)')}`
@@ -59,12 +70,11 @@ export function validateFS(
         continue;
       }
 
-
-     throw new Error(
-  `${icons.error} ${theme.error('Missing in filesystem:')} ${theme.highlight(expectedSrPath)}\n` +
-  `${theme.muted('Expected according to')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(expectedSrPath)}\n` +
-  `${theme.info('Fix:')} Run ${theme.primary('scaffoldrite generate')} to recreate missing files. This does not restore file contents.`
-);
+      throw new Error(
+        `${icons.error} ${theme.error('Missing in filesystem:')} ${theme.highlight(expectedSrPath)}\n` +
+        `${theme.muted('Expected according to')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(expectedSrPath)}\n` +
+        `${theme.info('Fix:')} Run ${theme.primary('scaffoldrite generate')} to recreate missing files. This does not restore file contents.`
+      );
     }
 
     if (child.type === "folder") {
@@ -95,7 +105,7 @@ export function validateFS(
 
   // Check extra items in filesystem not in .sr
   for (const item of actualItems) {
-    if (isIgnored(item, effectiveIgnoreList)) continue;
+    if (isItemIgnored(item, currentPath, effectiveIgnoreList)) continue;
 
     const existsInSr = root.children.some((c) => c.name === item);
     if (!existsInSr) {
@@ -113,7 +123,6 @@ export function validateFS(
       });
 
       if (allowExtra || allowedExplicitly) {
-        // Print info about allowed extra item
         console.log(
           `${icons.info} ${theme.info('Allowed extra:')} ${theme.highlight(extraRel)} ` +
           `${theme.muted(allowedExplicitly ? '(explicitly allowed)' : '(via --allow-extra)')}`

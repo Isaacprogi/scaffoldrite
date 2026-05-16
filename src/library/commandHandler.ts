@@ -26,7 +26,6 @@ import {
 
 import type {
     CommandHandler,
-    HistoryEntry,
 } from "../types/index";
 
 
@@ -57,7 +56,6 @@ const args = process.argv
 
 const arg3 = args[0];
 const arg4 = args[1];
-
 
 
 // FLAGS
@@ -104,13 +102,11 @@ const allowExtra =
     allowExtraPaths.length === 0;
 
 
-
 // SHARED
 
 const parsed = parseStructure(DEFAULT_TEMPLATE);
 
 const bar = createProgressBar();
-
 
 
 // INIT CHECK
@@ -123,6 +119,10 @@ const requiresInit = [
     "delete",
     "rename",
     "list",
+    "lock",
+    "unlock",
+    "find",
+    "deps",
 ];
 
 
@@ -193,7 +193,6 @@ if (invalidFlags?.length > 0) {
 }
 
 
-
 // RULE CHECKS
 
 checkMutuallyExclusiveFlags({
@@ -224,7 +223,6 @@ runRequirements({
 
 
 // CLI CONTEXT
-
 export interface CLIContext {
     command: string;
 
