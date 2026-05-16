@@ -5,6 +5,7 @@ import { findStandaloneFiles, detectCircular, buildDependencyGraph } from "./dep
 import { baseDir } from ".";
 import { getIgnoreList } from ".";
 
+
 export function startServer(
   graph: any,
   circular: string[][],
@@ -13,10 +14,11 @@ export function startServer(
 ) {
 
 
-  const distPath = path.resolve(__dirname, "../../../src/front/dist");
-
-
+  const distPath = path.resolve(__dirname, "../../front");
+  
+  
   const server = http.createServer((req: any, res: any) => {
+    console.log(distPath)
     console.log("\n--- Incoming Request ---");
     console.log("URL:", req.url);
 
