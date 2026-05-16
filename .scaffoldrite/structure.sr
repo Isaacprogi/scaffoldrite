@@ -106,7 +106,7 @@ folder docs {
     file source.ts
   }
   folder public {
-    file favicon.ico
+    file logo.png
   }
   file .gitignore
   file AGENTS.md
